@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       ORDER BY 1, 2
     `;
 
-    const rows = await db.query(query, [startDate, endDate, ...params]) as Array<{
+    const rows = await db.query(query, [startDate, endDate, ...params]) as unknown as Array<{
       ano: number; mes: number; faturamento: string;
     }>;
 

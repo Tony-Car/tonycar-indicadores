@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       LIMIT 15
     `;
 
-    const rows = await db.query(query, [startDate, endDate, ...params]) as Array<{
+    const rows = await db.query(query, [startDate, endDate, ...params]) as unknown as Array<{
       mecanico: string; faturamento: string;
     }>;
 

@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
         GROUP BY mes
         ORDER BY mes
       `;
-      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as Array<{
+      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as unknown as Array<{
         mes: number; faturamento_atual: string; faturamento_anterior: string;
       }>;
 
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
         GROUP BY semana_num
         ORDER BY semana_num
       `;
-      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as Array<{
+      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as unknown as Array<{
         semana_num: number; semana_inicio_atual: string | null;
         faturamento_atual: string; faturamento_anterior: string;
       }>;
@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
         GROUP BY dia
         ORDER BY dia
       `;
-      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as Array<{
+      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as unknown as Array<{
         dia: number; data_atual: string | null; faturamento_atual: string; faturamento_anterior: string;
       }>;
 

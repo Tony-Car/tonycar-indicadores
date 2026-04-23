@@ -11,25 +11,25 @@ export async function GET() {
          FROM marts.orcamentos
          WHERE mecanico_responsavel IS NOT NULL AND mecanico_responsavel != ''
          ORDER BY 1`
-      ) as Promise<Array<{ value: string }>>,
+      ) as unknown as Promise<Array<{ value: string }>>,
       db.query(
         `SELECT DISTINCT area as value
          FROM marts.itens_orcamento
          WHERE area IS NOT NULL AND area != ''
          ORDER BY 1`
-      ) as Promise<Array<{ value: string }>>,
+      ) as unknown as Promise<Array<{ value: string }>>,
       db.query(
         `SELECT DISTINCT grupo as value
          FROM marts.itens_orcamento
          WHERE grupo IS NOT NULL AND grupo != ''
          ORDER BY 1`
-      ) as Promise<Array<{ value: string }>>,
+      ) as unknown as Promise<Array<{ value: string }>>,
       db.query(
         `SELECT DISTINCT subgrupo as value
          FROM marts.itens_orcamento
          WHERE subgrupo IS NOT NULL AND subgrupo != ''
          ORDER BY 1`
-      ) as Promise<Array<{ value: string }>>,
+      ) as unknown as Promise<Array<{ value: string }>>,
     ]);
 
     return NextResponse.json({

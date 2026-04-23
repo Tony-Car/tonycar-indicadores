@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       ORDER BY faturamento DESC
     `;
 
-    const rows = await db.query(query, [startDate, endDate, ...params]) as Array<{
+    const rows = await db.query(query, [startDate, endDate, ...params]) as unknown as Array<{
       tipo_item: string; faturamento: string; lucro: string;
     }>;
 

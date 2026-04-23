@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
         ORDER BY mes
       `;
 
-      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as Array<{
+      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as unknown as Array<{
         mes: number; faturamento_atual: string; lucro_atual: string;
         faturamento_anterior: string; lucro_anterior: string;
       }>;
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
         ORDER BY semana_num
       `;
 
-      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as Array<{
+      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as unknown as Array<{
         semana_num: number; semana_inicio_atual: string | null;
         faturamento_atual: string; lucro_atual: string;
         faturamento_anterior: string; lucro_anterior: string;

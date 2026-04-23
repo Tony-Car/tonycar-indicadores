@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       ORDER BY lucro DESC
     `;
 
-    const rows = await db.query(query, [startDate, endDate, ...params]) as Array<{
+    const rows = await db.query(query, [startDate, endDate, ...params]) as unknown as Array<{
       mecanico: string; faturamento: string; lucro: string;
     }>;
 
