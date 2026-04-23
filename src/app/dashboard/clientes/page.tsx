@@ -62,6 +62,7 @@ interface ClientRow {
   data_ultimo_orcamento: string | null;
   primeiro_orcamento_periodo: string;
   ultimo_orcamento_periodo: string;
+  tempo_como_cliente_dias: number | null;
 }
 
 interface ResponsePayload {

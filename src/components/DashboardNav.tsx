@@ -9,6 +9,7 @@ const tabs = [
   { href: "/dashboard/clientes", label: "Clientes" },
   { href: "/dashboard/composicao", label: "Composicao" },
   { href: "/dashboard/detalhamento", label: "Detalhamento" },
+  { href: "/dashboard/categorias", label: "Categorias" },
 ];
 
 interface Props {

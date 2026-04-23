@@ -17,6 +17,7 @@ interface Row {
   data_ultimo_orcamento: string | null;
   primeiro_orcamento_periodo: string;
   ultimo_orcamento_periodo: string;
+  tempo_como_cliente_dias: number | null;
 }
 
 type SortKey = keyof Row;
@@ -58,6 +59,16 @@ function formatDays(value: number | null) {
   return `${value.toFixed(1)} dias`;
 }
 
+function formatTempoCli(days: number | null) {
+  if (days === null) return <span style={{ color: "#94a3b8" }}>—</span>;
+  if (days < 30) return `${days} dias`;
+  if (days < 365) return `${Math.floor(days / 30)} meses`;
+  const anos = Math.floor(days / 365);
+  const meses = Math.floor((days % 365) / 30);
+  if (meses === 0) return `${anos} ano${anos > 1 ? "s" : ""}`;
+  return `${anos} ano${anos > 1 ? "s" : ""} e ${meses} mes${meses > 1 ? "es" : ""}`;
+}
+
 const COL_HEADERS: Array<{ key: SortKey; label: string; align?: "right" }> = [
   { key: "nome_cliente", label: "Cliente" },
   { key: "origem_cliente", label: "Origem" },
@@ -72,6 +83,7 @@ const COL_HEADERS: Array<{ key: SortKey; label: string; align?: "right" }> = [
     align: "right",
   },
   { key: "data_ultimo_orcamento", label: "Ultimo orc. hist." },
+  { key: "tempo_como_cliente_dias", label: "Tempo cliente", align: "right" },
 ];
 
 interface Props {
@@ -285,6 +297,9 @@ export default function ClientesMetricasTable({ data, loading }: Props) {
                   </td>
                   <td style={{ padding: "9px 14px", fontSize: "13px", whiteSpace: "nowrap" }}>
                     {formatDate(row.data_ultimo_orcamento)}
+                  </td>
+                  <td style={{ padding: "9px 14px", fontSize: "13px", textAlign: "right", whiteSpace: "nowrap" }}>
+                    {formatTempoCli(row.tempo_como_cliente_dias)}
                   </td>
                 </tr>
               ))

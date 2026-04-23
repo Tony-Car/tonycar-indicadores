@@ -254,7 +254,12 @@ export async function GET(request: NextRequest) {
         cm.data_primeiro_orcamento,
         cm.data_ultimo_orcamento,
         ca.primeiro_orcamento_periodo,
-        ca.ultimo_orcamento_periodo
+        ca.ultimo_orcamento_periodo,
+        CASE
+          WHEN cm.data_primeiro_orcamento IS NOT NULL
+          THEN (CURRENT_DATE - cm.data_primeiro_orcamento::date)
+          ELSE NULL
+        END AS tempo_como_cliente_dias
       FROM clientes_ativos ca
       LEFT JOIN marts.clientes_metricas cm
         ON ca.nome_cliente = cm.nome_cliente
@@ -318,6 +323,7 @@ export async function GET(request: NextRequest) {
       data_ultimo_orcamento: string | null;
       primeiro_orcamento_periodo: string;
       ultimo_orcamento_periodo: string;
+      tempo_como_cliente_dias: string | null;
     }>;
 
     const summary = summaryRows[0] ?? {
@@ -387,6 +393,9 @@ export async function GET(request: NextRequest) {
         data_ultimo_orcamento: row.data_ultimo_orcamento,
         primeiro_orcamento_periodo: row.primeiro_orcamento_periodo,
         ultimo_orcamento_periodo: row.ultimo_orcamento_periodo,
+        tempo_como_cliente_dias: row.tempo_como_cliente_dias
+          ? Number(row.tempo_como_cliente_dias)
+          : null,
       })),
     });
   } catch (err) {
