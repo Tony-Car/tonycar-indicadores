@@ -83,11 +83,13 @@ function buildFilteredOrcamentosCte(
 }
 
 function formatMonthLabel(month: string) {
+  const normalizedMonth = month.slice(0, 10);
+
   return new Intl.DateTimeFormat("pt-BR", {
     month: "short",
     year: "2-digit",
     timeZone: "UTC",
-  }).format(new Date(`${month}T00:00:00Z`));
+  }).format(new Date(`${normalizedMonth}T00:00:00Z`));
 }
 
 export async function GET(request: NextRequest) {
@@ -170,7 +172,7 @@ export async function GET(request: NextRequest) {
       ${filteredOrcamentosCte},
       clientes_mes AS (
         SELECT DISTINCT
-          DATE_TRUNC('month', fo.data_orcamento)::date AS mes,
+          TO_CHAR(DATE_TRUNC('month', fo.data_orcamento)::date, 'YYYY-MM-DD') AS mes,
           fo.nome_cliente,
           fo.data_primeiro_orcamento
         FROM filtered_orcamentos fo
@@ -178,10 +180,10 @@ export async function GET(request: NextRequest) {
       SELECT
         mes,
         COUNT(*) FILTER (
-          WHERE DATE_TRUNC('month', data_primeiro_orcamento)::date = mes
+          WHERE DATE_TRUNC('month', data_primeiro_orcamento)::date = mes::date
         ) AS clientes_novos,
         COUNT(*) FILTER (
-          WHERE DATE_TRUNC('month', data_primeiro_orcamento)::date < mes
+          WHERE DATE_TRUNC('month', data_primeiro_orcamento)::date < mes::date
         ) AS clientes_antigos,
         COUNT(*) AS clientes_ativos
       FROM clientes_mes

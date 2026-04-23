@@ -184,6 +184,7 @@ export default function ClientesPage() {
 
   const [data, setData] = useState<ResponsePayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const buildParams = useCallback(() => {
     const params = new URLSearchParams();
@@ -211,10 +212,27 @@ export default function ClientesPage() {
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     fetch(`/api/data/clientes-analytics?${buildParams()}`)
-      .then((response) => response.json())
+      .then(async (response) => {
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload?.error || "Erro ao carregar metricas de clientes");
+        }
+
+        return payload as ResponsePayload;
+      })
       .then((payload: ResponsePayload) => {
         setData(payload);
+      })
+      .catch((err: unknown) => {
+        const message =
+          err instanceof Error ? err.message : "Erro ao carregar metricas de clientes";
+        setData(null);
+        setError(message);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, [buildParams]);
@@ -262,6 +280,22 @@ export default function ClientesPage() {
           dashboard continuam valendo aqui.
         </p>
       </div>
+
+      {error && (
+        <div
+          style={{
+            marginBottom: "24px",
+            background: "#fef2f2",
+            border: "1px solid #fecaca",
+            borderRadius: "12px",
+            padding: "16px 18px",
+            color: "#991b1b",
+            fontSize: "14px",
+          }}
+        >
+          {error}
+        </div>
+      )}
 
       <div
         style={{
