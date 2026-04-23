@@ -132,9 +132,12 @@ export async function GET(request: NextRequest) {
           SUM(fo.valor_total) AS faturamento_periodo,
           COUNT(*) AS orcamentos_periodo,
           AVG(fo.valor_total) AS ticket_medio_periodo,
-          AVG(fo.dias_desde_orcamento_anterior) FILTER (
-            WHERE fo.dias_desde_orcamento_anterior IS NOT NULL
-          ) AS tempo_medio_periodo_dias
+          CASE WHEN COUNT(*) > 1 THEN
+            AVG(fo.dias_desde_orcamento_anterior) FILTER (
+              WHERE fo.dias_desde_orcamento_anterior IS NOT NULL
+            )
+          ELSE NULL
+          END AS tempo_medio_periodo_dias
         FROM filtered_orcamentos fo
         GROUP BY fo.nome_cliente
       )
@@ -148,6 +151,7 @@ export async function GET(request: NextRequest) {
           WHERE data_primeiro_orcamento < $1
         ) AS clientes_antigos,
         COALESCE(SUM(faturamento_periodo), 0) AS faturamento_total_periodo,
+        COALESCE(SUM(orcamentos_periodo), 0) AS total_orcamentos_periodo,
         COALESCE(AVG(ticket_medio_periodo), 0) AS ticket_medio_por_cliente_periodo,
         COALESCE(
           SUM(faturamento_periodo) / NULLIF(SUM(orcamentos_periodo), 0),
@@ -155,9 +159,14 @@ export async function GET(request: NextRequest) {
         ) AS ticket_medio_geral_periodo,
         COALESCE(AVG(tempo_medio_periodo_dias), 0) AS tempo_medio_por_cliente_dias,
         COALESCE((
-          SELECT AVG(dias_desde_orcamento_anterior)
-          FROM filtered_orcamentos
-          WHERE dias_desde_orcamento_anterior IS NOT NULL
+          SELECT AVG(fo.dias_desde_orcamento_anterior)
+          FROM filtered_orcamentos fo
+          WHERE fo.dias_desde_orcamento_anterior IS NOT NULL
+            AND fo.nome_cliente IN (
+              SELECT nome_cliente FROM filtered_orcamentos
+              GROUP BY nome_cliente
+              HAVING COUNT(*) > 1
+            )
         ), 0) AS tempo_medio_geral_dias,
         COALESCE((
           SELECT AVG(cm.ltv_historico)
@@ -220,9 +229,12 @@ export async function GET(request: NextRequest) {
           SUM(fo.valor_total) AS faturamento_periodo,
           COUNT(*) AS orcamentos_periodo,
           AVG(fo.valor_total) AS ticket_medio_periodo,
-          AVG(fo.dias_desde_orcamento_anterior) FILTER (
-            WHERE fo.dias_desde_orcamento_anterior IS NOT NULL
-          ) AS tempo_medio_periodo_dias,
+          CASE WHEN COUNT(*) > 1 THEN
+            AVG(fo.dias_desde_orcamento_anterior) FILTER (
+              WHERE fo.dias_desde_orcamento_anterior IS NOT NULL
+            )
+          ELSE NULL
+          END AS tempo_medio_periodo_dias,
           MIN(fo.data_orcamento) AS primeiro_orcamento_periodo,
           MAX(fo.data_orcamento) AS ultimo_orcamento_periodo
         FROM filtered_orcamentos fo
@@ -269,6 +281,7 @@ export async function GET(request: NextRequest) {
       clientes_novos: string;
       clientes_antigos: string;
       faturamento_total_periodo: string;
+      total_orcamentos_periodo: string;
       ticket_medio_por_cliente_periodo: string;
       ticket_medio_geral_periodo: string;
       tempo_medio_por_cliente_dias: string;
@@ -312,6 +325,7 @@ export async function GET(request: NextRequest) {
       clientes_novos: "0",
       clientes_antigos: "0",
       faturamento_total_periodo: "0",
+      total_orcamentos_periodo: "0",
       ticket_medio_por_cliente_periodo: "0",
       ticket_medio_geral_periodo: "0",
       tempo_medio_por_cliente_dias: "0",
@@ -325,6 +339,7 @@ export async function GET(request: NextRequest) {
         clientes_novos: Number(summary.clientes_novos),
         clientes_antigos: Number(summary.clientes_antigos),
         faturamento_total_periodo: Number(summary.faturamento_total_periodo),
+        total_orcamentos_periodo: Number(summary.total_orcamentos_periodo),
         ticket_medio_por_cliente_periodo: Number(
           summary.ticket_medio_por_cliente_periodo
         ),

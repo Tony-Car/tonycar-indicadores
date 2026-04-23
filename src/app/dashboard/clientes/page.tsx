@@ -24,6 +24,7 @@ interface Summary {
   clientes_novos: number;
   clientes_antigos: number;
   faturamento_total_periodo: number;
+  total_orcamentos_periodo: number;
   ticket_medio_por_cliente_periodo: number;
   ticket_medio_geral_periodo: number;
   tempo_medio_por_cliente_dias: number;
@@ -242,6 +243,7 @@ export default function ClientesPage() {
     clientes_novos: 0,
     clientes_antigos: 0,
     faturamento_total_periodo: 0,
+    total_orcamentos_periodo: 0,
     ticket_medio_por_cliente_periodo: 0,
     ticket_medio_geral_periodo: 0,
     tempo_medio_por_cliente_dias: 0,
@@ -322,14 +324,19 @@ export default function ClientesPage() {
           value={loading ? "..." : summary.clientes_antigos.toLocaleString("pt-BR")}
         />
         <OverviewCard
+          label="Orcamentos no periodo"
+          helper="Total de orcamentos emitidos"
+          value={loading ? "..." : summary.total_orcamentos_periodo.toLocaleString("pt-BR")}
+        />
+        <OverviewCard
           label="Ticket medio geral"
           helper="Faturamento total / orcamentos do periodo"
           value={loading ? "..." : formatBRL(summary.ticket_medio_geral_periodo)}
         />
         <OverviewCard
           label="Tempo medio geral"
-          helper="Dias entre orcamentos"
-          value={loading ? "..." : `${summary.tempo_medio_geral_dias.toFixed(1)} dias`}
+          helper="Dias entre orcamentos (clientes com 2+ orcamentos)"
+          value={loading ? "..." : summary.tempo_medio_geral_dias > 0 ? `${summary.tempo_medio_geral_dias.toFixed(1)} dias` : "—"}
         />
         <OverviewCard
           label="LTV medio historico"
