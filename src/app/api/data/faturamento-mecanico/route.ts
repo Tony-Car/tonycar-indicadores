@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       LIMIT 15
     `;
 
-    const rows = await db(query, [anoAtual, anoAnterior, ...params]) as Array<{
+    const rows = await db.query(query, [anoAtual, anoAnterior, ...params]) as Array<{
       mecanico: string; faturamento_atual: string; faturamento_anterior: string;
     }>;
 

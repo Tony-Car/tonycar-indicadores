@@ -49,3 +49,9 @@ export function isEmailAllowed(email: string): boolean {
   const list = allowed.split(",").map((e) => e.trim().toLowerCase());
   return list.includes(email.toLowerCase());
 }
+
+export function verifyPassword(password: string): boolean {
+  const appPassword = process.env.APP_PASSWORD;
+  if (!appPassword) return false;
+  return password === appPassword;
+}

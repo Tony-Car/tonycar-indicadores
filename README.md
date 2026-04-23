@@ -23,16 +23,22 @@ Aplicação de indicadores para acompanhamento e gestão da oficina TonyCar, int
 - Next.js 15 (App Router)
 - Recharts (Gráficos)
 - PostgreSQL (Neon Database)
-- Auth: Magic Link (Custom implementation)
+- Auth: Senha de Acesso (JWT + Cookies)
 
 ## Configuração
 
-### Variáveis de Ambiente (.env)
+### Variáveis de Ambiente (.env.local)
 ```env
+# URL de conexão do seu banco (ex: Neon ou Postgres local)
 DATABASE_URL=sua_url_do_postgres
+
+# Segredo para o JWT (gere um aleatório)
 JWT_SECRET=seu_segredo_jwt
-ALLOWED_EMAILS=email1@exemplo.com,email2@exemplo.com
-RESEND_API_KEY=sua_chave_resend (opcional para envio de email)
+
+# Senha de acesso ao painel
+APP_PASSWORD=sua_senha_de_acesso_aqui
+
+# URL base (usado para redirecionamentos se necessário)
 BASE_URL=http://localhost:3000
 ```
 

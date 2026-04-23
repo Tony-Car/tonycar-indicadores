@@ -50,11 +50,11 @@ export async function GET(request: NextRequest) {
     `;
 
     const [fatRows, custoRows] = await Promise.all([
-      db(fatQuery, [anoAtual, ...params]) as Promise<Array<{
+      db.query(fatQuery, [anoAtual, ...params]) as Promise<Array<{
         area: string; grupo: string; subgrupo: string;
         descricao_item: string; faturamento: string;
       }>>,
-      db(custoQuery, [anoAtual, ...params]) as Promise<Array<{
+      db.query(custoQuery, [anoAtual, ...params]) as Promise<Array<{
         area: string; grupo: string; subgrupo: string;
         descricao_item: string; custo: string; lucro: string;
       }>>,

@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       ORDER BY faturamento_atual DESC
     `;
 
-    const rows = await db(query, [anoAtual, anoAnterior, ...params]) as Array<{
+    const rows = await db.query(query, [anoAtual, anoAnterior, ...params]) as Array<{
       tipo_item: string; faturamento_atual: string; faturamento_anterior: string;
     }>;
 

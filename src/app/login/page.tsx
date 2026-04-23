@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
+  const router = useRouter();
+  const [password, setPassword] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -13,19 +15,19 @@ export default function LoginPage() {
     setErrorMsg("");
 
     try {
-      const res = await fetch("/api/auth/send-link", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMsg(data.error || "Erro ao enviar o link.");
+        setErrorMsg(data.error || "Senha incorreta.");
         setStatus("error");
       } else {
-        setStatus("sent");
+        router.push("/dashboard/faturamento");
       }
     } catch {
       setErrorMsg("Erro de conexão. Tente novamente.");
@@ -87,124 +89,89 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {status === "sent" ? (
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "48px", marginBottom: "16px" }}>📬</div>
-            <h2
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: "20px" }}>
+            <label
+              htmlFor="password"
               style={{
-                fontSize: "18px",
-                fontWeight: "600",
-                color: "#1e293b",
-                marginBottom: "8px",
-              }}
-            >
-              Link enviado!
-            </h2>
-            <p style={{ fontSize: "14px", color: "#64748b", lineHeight: "1.6" }}>
-              Enviamos um link de acesso para{" "}
-              <strong style={{ color: "#1e293b" }}>{email}</strong>. Verifique
-              sua caixa de entrada e clique no link para entrar.
-            </p>
-            <button
-              onClick={() => setStatus("idle")}
-              style={{
-                marginTop: "24px",
-                background: "none",
-                border: "none",
-                color: "#2563eb",
-                cursor: "pointer",
+                display: "block",
                 fontSize: "14px",
-                textDecoration: "underline",
+                fontWeight: "500",
+                color: "#374151",
+                marginBottom: "6px",
               }}
             >
-              Usar outro e-mail
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: "20px" }}>
-              <label
-                htmlFor="email"
-                style={{
-                  display: "block",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  color: "#374151",
-                  marginBottom: "6px",
-                }}
-              >
-                E-mail
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: "8px",
-                  fontSize: "15px",
-                  outline: "none",
-                  transition: "border-color 0.15s",
-                  color: "#1e293b",
-                  background: "#fff",
-                }}
-                onFocus={(e) => (e.target.style.borderColor = "#2563eb")}
-                onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-              />
-            </div>
-
-            {status === "error" && (
-              <div
-                style={{
-                  background: "#fef2f2",
-                  border: "1px solid #fecaca",
-                  borderRadius: "8px",
-                  padding: "10px 14px",
-                  fontSize: "14px",
-                  color: "#dc2626",
-                  marginBottom: "16px",
-                }}
-              >
-                {errorMsg}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={status === "loading"}
+              Senha de Acesso
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
               style={{
                 width: "100%",
-                padding: "12px",
-                background: status === "loading" ? "#93c5fd" : "#2563eb",
-                color: "#fff",
-                border: "none",
+                padding: "10px 14px",
+                border: "1px solid #d1d5db",
                 borderRadius: "8px",
                 fontSize: "15px",
-                fontWeight: "600",
-                cursor: status === "loading" ? "not-allowed" : "pointer",
-                transition: "background 0.15s",
+                outline: "none",
+                transition: "border-color 0.15s",
+                color: "#1e293b",
+                background: "#fff",
               }}
-            >
-              {status === "loading" ? "Enviando..." : "Enviar link de acesso"}
-            </button>
+              onFocus={(e) => (e.target.style.borderColor = "#2563eb")}
+              onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+            />
+          </div>
 
-            <p
+          {status === "error" && (
+            <div
               style={{
-                textAlign: "center",
-                fontSize: "13px",
-                color: "#94a3b8",
-                marginTop: "16px",
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                borderRadius: "8px",
+                padding: "10px 14px",
+                fontSize: "14px",
+                color: "#dc2626",
+                marginBottom: "16px",
               }}
             >
-              Você receberá um link por e-mail para acessar sem senha.
-            </p>
-          </form>
-        )}
+              {errorMsg}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            style={{
+              width: "100%",
+              padding: "12px",
+              background: status === "loading" ? "#93c5fd" : "#2563eb",
+              color: "#fff",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "15px",
+              fontWeight: "600",
+              cursor: status === "loading" ? "not-allowed" : "pointer",
+              transition: "background 0.15s",
+            }}
+          >
+            {status === "loading" ? "Entrando..." : "Entrar no Painel"}
+          </button>
+
+          <p
+            style={{
+              textAlign: "center",
+              fontSize: "13px",
+              color: "#94a3b8",
+              marginTop: "16px",
+            }}
+          >
+            Consulte o administrador para obter a senha.
+          </p>
+        </form>
       </div>
     </div>
   );

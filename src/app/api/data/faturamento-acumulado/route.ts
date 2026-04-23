@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       ORDER BY mes
     `;
 
-    const rows = await db(query, [anoAtual, anoAnterior, ...params]) as Array<{
+    const rows = await db.query(query, [anoAtual, anoAnterior, ...params]) as Array<{
       mes: number; faturamento_atual: string; faturamento_anterior: string;
     }>;
 

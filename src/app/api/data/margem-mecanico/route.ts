@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       ORDER BY lucro DESC
     `;
 
-    const rows = await db(query, [anoAtual, ...params]) as Array<{
+    const rows = await db.query(query, [anoAtual, ...params]) as Array<{
       mecanico: string; faturamento: string; lucro: string;
     }>;
 
