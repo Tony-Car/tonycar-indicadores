@@ -8,6 +8,21 @@ function parseIsoDateParts(isoDate: string) {
   return { year, month, day };
 }
 
+const SHORT_MONTHS = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
+
 function toIsoDate(year: number, month: number, day: number) {
   return [
     String(year).padStart(4, "0"),
@@ -52,4 +67,18 @@ export function formatDateRangeLabel(startDate: string, endDate: string) {
   }
 
   return `${formatDateLabel(startDate)} a ${formatDateLabel(endDate)}`;
+}
+
+export function spansMultipleCalendarYears(startDate: string, endDate: string) {
+  return parseIsoDateParts(startDate).year !== parseIsoDateParts(endDate).year;
+}
+
+export function formatMonthBucketLabel(
+  isoDate: string,
+  includeYear = false
+) {
+  const { year, month } = parseIsoDateParts(isoDate);
+  const monthLabel = SHORT_MONTHS[month - 1];
+
+  return includeYear ? `${monthLabel}/${String(year).slice(2)}` : monthLabel;
 }

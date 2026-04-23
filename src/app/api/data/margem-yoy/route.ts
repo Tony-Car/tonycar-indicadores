@@ -1,21 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, buildFilterConditions, parseArrayParam } from "@/lib/db";
-import { getPreviousYearRange } from "@/lib/period";
-
-const MESES = [
-  "Jan",
-  "Fev",
-  "Mar",
-  "Abr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Set",
-  "Out",
-  "Nov",
-  "Dez",
-];
+import {
+  formatMonthBucketLabel,
+  getPreviousYearRange,
+  spansMultipleCalendarYears,
+} from "@/lib/period";
 
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
@@ -50,36 +39,50 @@ export async function GET(request: NextRequest) {
       startDate,
       endDate
     );
+    const includeYearInLabels = spansMultipleCalendarYears(startDate, endDate);
 
     if (granularity === "mensal") {
       const query = `
-        WITH base AS (
+        WITH current_months AS (
           SELECT
-            CASE
-              WHEN io.data_orcamento >= $1 AND io.data_orcamento <= $2 THEN 'atual'
-              WHEN io.data_orcamento >= $3 AND io.data_orcamento <= $4 THEN 'anterior'
-            END AS periodo,
-            EXTRACT(MONTH FROM io.data_orcamento)::int AS mes,
+            generate_series(
+              date_trunc('month', $1::date),
+              date_trunc('month', $2::date),
+              interval '1 month'
+            )::date AS month_start
+        ),
+        current_data AS (
+          SELECT
+            date_trunc('month', io.data_orcamento)::date AS month_start,
             SUM(io.valor_total_item) AS faturamento,
             SUM(io.lucro_bruto_total) AS lucro
           FROM marts.itens_orcamento io
           INNER JOIN marts.orcamentos o ON io.nk_orcamento = o.nk_orcamento
           WHERE ${allConditions.join(" AND ")}
-            AND (
-              (io.data_orcamento >= $1 AND io.data_orcamento <= $2) OR
-              (io.data_orcamento >= $3 AND io.data_orcamento <= $4)
-            )
-          GROUP BY 1, 2
+            AND io.data_orcamento >= $1 AND io.data_orcamento <= $2
+          GROUP BY 1
+        ),
+        previous_data AS (
+          SELECT
+            (date_trunc('month', io.data_orcamento) + interval '1 year')::date AS month_start,
+            SUM(io.valor_total_item) AS faturamento,
+            SUM(io.lucro_bruto_total) AS lucro
+          FROM marts.itens_orcamento io
+          INNER JOIN marts.orcamentos o ON io.nk_orcamento = o.nk_orcamento
+          WHERE ${allConditions.join(" AND ")}
+            AND io.data_orcamento >= $3 AND io.data_orcamento <= $4
+          GROUP BY 1
         )
         SELECT
-          mes,
-          COALESCE(SUM(CASE WHEN periodo = 'atual' THEN faturamento END), 0) AS faturamento_atual,
-          COALESCE(SUM(CASE WHEN periodo = 'atual' THEN lucro END), 0) AS lucro_atual,
-          COALESCE(SUM(CASE WHEN periodo = 'anterior' THEN faturamento END), 0) AS faturamento_anterior,
-          COALESCE(SUM(CASE WHEN periodo = 'anterior' THEN lucro END), 0) AS lucro_anterior
-        FROM base
-        GROUP BY mes
-        ORDER BY mes
+          cm.month_start,
+          COALESCE(cd.faturamento, 0) AS faturamento_atual,
+          COALESCE(cd.lucro, 0) AS lucro_atual,
+          COALESCE(pd.faturamento, 0) AS faturamento_anterior,
+          COALESCE(pd.lucro, 0) AS lucro_anterior
+        FROM current_months cm
+        LEFT JOIN current_data cd ON cd.month_start = cm.month_start
+        LEFT JOIN previous_data pd ON pd.month_start = cm.month_start
+        ORDER BY cm.month_start
       `;
 
       const rows = (await db.query(query, [
@@ -89,7 +92,7 @@ export async function GET(request: NextRequest) {
         pAntE,
         ...params,
       ])) as unknown as Array<{
-        mes: number;
+        month_start: string;
         faturamento_atual: string;
         lucro_atual: string;
         faturamento_anterior: string;
@@ -103,7 +106,7 @@ export async function GET(request: NextRequest) {
         const lucroAnterior = parseFloat(r.lucro_anterior);
 
         return {
-          label: MESES[r.mes - 1],
+          label: formatMonthBucketLabel(r.month_start, includeYearInLabels),
           faturamento_atual: fatAtual,
           lucro_atual: lucroAtual,
           margem_pct_atual: fatAtual > 0 ? (lucroAtual / fatAtual) * 100 : 0,
