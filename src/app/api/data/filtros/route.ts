@@ -5,32 +5,37 @@ export async function GET() {
   try {
     const db = getDb();
 
-    const [mecanicos, areas, grupos, subgrupos] = await Promise.all([
+    const rawResults = await Promise.all([
       db.query(
         `SELECT DISTINCT mecanico_responsavel as value
          FROM marts.orcamentos
          WHERE mecanico_responsavel IS NOT NULL AND mecanico_responsavel != ''
          ORDER BY 1`
-      ) as unknown as Promise<Array<{ value: string }>>,
+      ),
       db.query(
         `SELECT DISTINCT area as value
          FROM marts.itens_orcamento
          WHERE area IS NOT NULL AND area != ''
          ORDER BY 1`
-      ) as unknown as Promise<Array<{ value: string }>>,
+      ),
       db.query(
         `SELECT DISTINCT grupo as value
          FROM marts.itens_orcamento
          WHERE grupo IS NOT NULL AND grupo != ''
          ORDER BY 1`
-      ) as unknown as Promise<Array<{ value: string }>>,
+      ),
       db.query(
         `SELECT DISTINCT subgrupo as value
          FROM marts.itens_orcamento
          WHERE subgrupo IS NOT NULL AND subgrupo != ''
          ORDER BY 1`
-      ) as unknown as Promise<Array<{ value: string }>>,
+      ),
     ]);
+
+    const mecanicos = rawResults[0] as unknown as Array<{ value: string }>;
+    const areas = rawResults[1] as unknown as Array<{ value: string }>;
+    const grupos = rawResults[2] as unknown as Array<{ value: string }>;
+    const subgrupos = rawResults[3] as unknown as Array<{ value: string }>;
 
     return NextResponse.json({
       mecanicos: mecanicos.map((r) => r.value),

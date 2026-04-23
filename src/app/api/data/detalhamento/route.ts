@@ -22,7 +22,6 @@ export async function GET(request: NextRequest) {
     const db = getDb();
     const { conditions, params } = buildFilterConditions(filters, 3);
 
-    // Faturamento (all data in range)
     const fatQuery = `
       SELECT
         COALESCE(io.area, 'Sem Área') AS area,
@@ -37,7 +36,6 @@ export async function GET(request: NextRequest) {
       GROUP BY 1, 2, 3, 4
     `;
 
-    // Costs (only where flag_custos_atualizados = true)
     const custoConditions = [...conditions, "io.flag_custos_atualizados = true"];
     const custoQuery = `
       SELECT
@@ -54,18 +52,23 @@ export async function GET(request: NextRequest) {
       GROUP BY 1, 2, 3, 4
     `;
 
-    const [fatRows, custoRows] = await Promise.all([
-      db.query(fatQuery, [startDate, endDate, ...params]) as unknown as Promise<Array<{
-        area: string; grupo: string; subgrupo: string;
-        descricao_item: string; faturamento: string;
-      }>>,
-      db.query(custoQuery, [startDate, endDate, ...params]) as unknown as Promise<Array<{
-        area: string; grupo: string; subgrupo: string;
-        descricao_item: string; custo: string; lucro: string;
-      }>>,
+    // Executamos sem casting no Promise.all
+    const [fatRowsRaw, custoRowsRaw] = await Promise.all([
+      db.query(fatQuery, [startDate, endDate, ...params]),
+      db.query(custoQuery, [startDate, endDate, ...params]),
     ]);
 
-    // Create a lookup for cost data
+    // Casting dos resultados após o await
+    const fatRows = fatRowsRaw as unknown as Array<{
+      area: string; grupo: string; subgrupo: string;
+      descricao_item: string; faturamento: string;
+    }>;
+
+    const custoRows = custoRowsRaw as unknown as Array<{
+      area: string; grupo: string; subgrupo: string;
+      descricao_item: string; custo: string; lucro: string;
+    }>;
+
     const custoMap = new Map<string, { custo: number; lucro: number }>();
     for (const r of custoRows) {
       const key = `${r.area}|${r.grupo}|${r.subgrupo}|${r.descricao_item}`;
