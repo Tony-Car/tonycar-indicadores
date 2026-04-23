@@ -307,7 +307,7 @@ export default function FaturamentoPage() {
           />
         }
       >
-        <YoYChart data={yoyData as Parameters<typeof YoYChart>[0]["data"]} anoAtual={anoAtual} />
+        <YoYChart data={yoyData as any[]} anoAtual={anoAtual} />
       </ChartCard>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
@@ -317,7 +317,7 @@ export default function FaturamentoPage() {
           subtitle={`${anoAtual} vs ${anoAtual - 1}`}
           loading={tipoLoading}
         >
-          <TipoItemChart data={tipoData as Parameters<typeof TipoItemChart>[0]["data"]} anoAtual={anoAtual} />
+          <TipoItemChart data={tipoData as any[]} anoAtual={anoAtual} />
         </ChartCard>
 
         {/* Acumulado */}
@@ -326,7 +326,7 @@ export default function FaturamentoPage() {
           subtitle={`Acumulado YoY — ${anoAtual} vs ${anoAtual - 1}`}
           loading={acumLoading}
         >
-          <AcumuladoChart data={acumData as Parameters<typeof AcumuladoChart>[0]["data"]} anoAtual={anoAtual} />
+          <AcumuladoChart data={acumData as any[]} anoAtual={anoAtual} />
         </ChartCard>
       </div>
 
@@ -337,7 +337,7 @@ export default function FaturamentoPage() {
           subtitle={`Top 15 mecânicos por faturamento — ${anoAtual} vs ${anoAtual - 1}`}
           loading={mecanicoLoading}
         >
-          <MecanicoChart data={mecanicoData as Parameters<typeof MecanicoChart>[0]["data"]} anoAtual={anoAtual} />
+          <MecanicoChart data={mecanicoData as any[]} anoAtual={anoAtual} />
         </ChartCard>
       </div>
     </div>

@@ -236,7 +236,7 @@ export default function MargemPage() {
         }
       >
         <MargemYoYChart
-          data={yoyData as Parameters<typeof MargemYoYChart>[0]["data"]}
+          data={yoyData as any[]}
           anoAtual={anoAtual}
         />
       </ChartCard>
@@ -249,7 +249,7 @@ export default function MargemPage() {
         notice="Dados de custo disponíveis apenas a partir de junho/2025 (flag_custos_atualizados)"
       >
         <MargemTipoItemChart
-          data={tipoData as Parameters<typeof MargemTipoItemChart>[0]["data"]}
+          data={tipoData as any[]}
           height={320}
         />
       </ChartCard>
@@ -262,7 +262,7 @@ export default function MargemPage() {
         notice="Dados de custo disponíveis apenas a partir de junho/2025 (flag_custos_atualizados)"
       >
         <MargemMecanicoChart
-          data={mecanicoData as Parameters<typeof MargemMecanicoChart>[0]["data"]}
+          data={mecanicoData as any[]}
           height={400}
         />
       </ChartCard>
