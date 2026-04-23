@@ -179,6 +179,7 @@ export default function MargemPage() {
   const [granularity, setGranularity] = useState<Granularity>("mensal");
   const [yoyData, setYoyData] = useState<unknown[]>([]);
   const [yoyLoading, setYoyLoading] = useState(true);
+  const [yoyError, setYoyError] = useState<string | null>(null);
   const [tipoData, setTipoData] = useState<unknown[]>([]);
   const [tipoLoading, setTipoLoading] = useState(true);
   const [mecanicoData, setMecanicoData] = useState<unknown[]>([]);
@@ -208,12 +209,31 @@ export default function MargemPage() {
 
   useEffect(() => {
     setYoyLoading(true);
+    setYoyError(null);
     const p = buildParams();
     p.set("granularity", granularity);
     fetch(`/api/data/margem-yoy?${p}`)
-      .then((r) => r.json())
-      .then((d) => {
-        setYoyData(d);
+      .then(async (response) => {
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload?.error || "Erro ao carregar margem por periodo");
+        }
+
+        return Array.isArray(payload) ? payload : [];
+      })
+      .then((payload) => {
+        setYoyData(payload);
+      })
+      .catch((err: unknown) => {
+        setYoyData([]);
+        setYoyError(
+          err instanceof Error
+            ? err.message
+            : "Erro ao carregar margem por periodo"
+        );
+      })
+      .finally(() => {
         setYoyLoading(false);
       });
   }, [granularity, buildParams]);
@@ -239,12 +259,13 @@ export default function MargemPage() {
   }, [buildParams]);
 
   type MargemRow = { faturamento_atual: number; lucro_atual: number };
+  const yoyRows = Array.isArray(yoyData) ? (yoyData as MargemRow[]) : [];
 
-  const totalFat = (yoyData as MargemRow[]).reduce(
+  const totalFat = yoyRows.reduce(
     (sum, row) => sum + row.faturamento_atual,
     0
   );
-  const totalLucro = (yoyData as MargemRow[]).reduce(
+  const totalLucro = yoyRows.reduce(
     (sum, row) => sum + row.lucro_atual,
     0
   );
@@ -259,6 +280,22 @@ export default function MargemPage() {
 
   return (
     <div>
+      {yoyError && (
+        <div
+          style={{
+            marginBottom: "24px",
+            background: "#fef2f2",
+            border: "1px solid #fecaca",
+            borderRadius: "12px",
+            padding: "16px 18px",
+            color: "#991b1b",
+            fontSize: "14px",
+          }}
+        >
+          {yoyError}
+        </div>
+      )}
+
       <div
         style={{
           display: "grid",
@@ -332,7 +369,7 @@ export default function MargemPage() {
         notice="Dados de custo disponiveis apenas a partir de junho/2025 (flag_custos_atualizados)"
         action={<GranularityTabs value={granularity} onChange={setGranularity} />}
       >
-        <MargemYoYChart data={yoyData as any[]} />
+        <MargemYoYChart data={yoyRows as any[]} />
       </ChartCard>
 
       <ChartCard

@@ -1,5 +1,14 @@
-function parseIsoDateParts(isoDate: string) {
-  const [year, month, day] = isoDate.split("-").map(Number);
+function parseIsoDateParts(isoDate: string | Date) {
+  if (isoDate instanceof Date) {
+    return {
+      year: isoDate.getUTCFullYear(),
+      month: isoDate.getUTCMonth() + 1,
+      day: isoDate.getUTCDate(),
+    };
+  }
+
+  const normalizedDate = isoDate.slice(0, 10);
+  const [year, month, day] = normalizedDate.split("-").map(Number);
 
   if (!year || !month || !day) {
     throw new Error(`Invalid ISO date: ${isoDate}`);
@@ -50,7 +59,7 @@ export function getPreviousYearRange(startDate: string, endDate: string) {
   };
 }
 
-export function formatDateLabel(isoDate: string) {
+export function formatDateLabel(isoDate: string | Date) {
   const { year, month, day } = parseIsoDateParts(isoDate);
 
   return new Intl.DateTimeFormat("pt-BR", {
@@ -74,7 +83,7 @@ export function spansMultipleCalendarYears(startDate: string, endDate: string) {
 }
 
 export function formatMonthBucketLabel(
-  isoDate: string,
+  isoDate: string | Date,
   includeYear = false
 ) {
   const { year, month } = parseIsoDateParts(isoDate);

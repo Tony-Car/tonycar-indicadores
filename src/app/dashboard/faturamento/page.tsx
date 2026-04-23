@@ -211,6 +211,7 @@ export default function FaturamentoPage() {
 
   const [yoyData, setYoyData] = useState<unknown[]>([]);
   const [yoyLoading, setYoyLoading] = useState(true);
+  const [yoyError, setYoyError] = useState<string | null>(null);
   const [tipoData, setTipoData] = useState<unknown[]>([]);
   const [tipoLoading, setTipoLoading] = useState(true);
   const [mecanicoData, setMecanicoData] = useState<unknown[]>([]);
@@ -242,12 +243,31 @@ export default function FaturamentoPage() {
 
   useEffect(() => {
     setYoyLoading(true);
+    setYoyError(null);
     const p = buildParams();
     p.set("granularity", granularity);
     fetch(`/api/data/faturamento-yoy?${p}`)
-      .then((r) => r.json())
-      .then((d) => {
-        setYoyData(d);
+      .then(async (response) => {
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload?.error || "Erro ao carregar faturamento por periodo");
+        }
+
+        return Array.isArray(payload) ? payload : [];
+      })
+      .then((payload) => {
+        setYoyData(payload);
+      })
+      .catch((err: unknown) => {
+        setYoyData([]);
+        setYoyError(
+          err instanceof Error
+            ? err.message
+            : "Erro ao carregar faturamento por periodo"
+        );
+      })
+      .finally(() => {
         setYoyLoading(false);
       });
   }, [granularity, buildParams]);
@@ -289,12 +309,21 @@ export default function FaturamentoPage() {
         ? "semanal"
         : `diaria - ${MESES[mes - 1]}`;
 
-  const faturamentoSelecionado = (
-    yoyData as Array<{ faturamento_atual: number }>
-  ).reduce((sum, row) => sum + row.faturamento_atual, 0);
-  const faturamentoComparativo = (
-    yoyData as Array<{ faturamento_anterior: number }>
-  ).reduce((sum, row) => sum + row.faturamento_anterior, 0);
+  const yoyRows = Array.isArray(yoyData)
+    ? (yoyData as Array<{
+        faturamento_atual: number;
+        faturamento_anterior: number;
+      }>)
+    : [];
+
+  const faturamentoSelecionado = yoyRows.reduce(
+    (sum, row) => sum + row.faturamento_atual,
+    0
+  );
+  const faturamentoComparativo = yoyRows.reduce(
+    (sum, row) => sum + row.faturamento_anterior,
+    0
+  );
   const growth =
     faturamentoComparativo > 0
       ? ((faturamentoSelecionado - faturamentoComparativo) /
@@ -304,6 +333,22 @@ export default function FaturamentoPage() {
 
   return (
     <div>
+      {yoyError && (
+        <div
+          style={{
+            marginBottom: "24px",
+            background: "#fef2f2",
+            border: "1px solid #fecaca",
+            borderRadius: "12px",
+            padding: "16px 18px",
+            color: "#991b1b",
+            fontSize: "14px",
+          }}
+        >
+          {yoyError}
+        </div>
+      )}
+
       <div
         style={{
           display: "grid",
@@ -432,7 +477,7 @@ export default function FaturamentoPage() {
           />
         }
       >
-        <YoYChart data={yoyData as any[]} />
+        <YoYChart data={yoyRows as any[]} />
       </ChartCard>
 
       <div
