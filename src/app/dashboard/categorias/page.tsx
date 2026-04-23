@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { formatDateRangeLabel } from "@/lib/period";
+
+const DistributionPieChart = dynamic(
+  () => import("@/components/charts/DistributionPieChart"),
+  { ssr: false }
+);
 
 interface SubgrupoRow {
   area: string;
@@ -180,6 +186,30 @@ export default function CategoriasPage() {
 
   const tree = useMemo(() => buildTree(rows), [rows]);
 
+  const areaDistribution = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of rows) {
+      map.set(r.area, (map.get(r.area) || 0) + r.faturamento);
+    }
+    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+  }, [rows]);
+
+  const grupoDistribution = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of rows) {
+      map.set(r.grupo, (map.get(r.grupo) || 0) + r.faturamento);
+    }
+    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+  }, [rows]);
+
+  const subgrupoDistribution = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of rows) {
+      map.set(r.subgrupo, (map.get(r.subgrupo) || 0) + r.faturamento);
+    }
+    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+  }, [rows]);
+
   const totals = useMemo(() => {
     let faturamento = 0;
     let custo: number | null = null;
@@ -237,6 +267,29 @@ export default function CategoriasPage() {
       {error && (
         <div style={{ marginBottom: "24px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "12px", padding: "16px 18px", color: "#991b1b", fontSize: "14px" }}>
           {error}
+        </div>
+      )}
+
+      {!loading && rows.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px", marginBottom: "24px" }}>
+          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
+            <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#475569", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Distribuicao por Area
+            </h3>
+            <DistributionPieChart data={areaDistribution} height={220} />
+          </div>
+          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
+            <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#475569", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Distribuicao por Grupo
+            </h3>
+            <DistributionPieChart data={grupoDistribution} height={220} />
+          </div>
+          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
+            <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#475569", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Distribuicao por Subgrupo
+            </h3>
+            <DistributionPieChart data={subgrupoDistribution} height={220} />
+          </div>
         </div>
       )}
 

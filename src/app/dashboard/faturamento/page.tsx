@@ -19,6 +19,10 @@ const AcumuladoChart = dynamic(
   () => import("@/components/charts/AcumuladoChart"),
   { ssr: false }
 );
+const DistributionPieChart = dynamic(
+  () => import("@/components/charts/DistributionPieChart"),
+  { ssr: false }
+);
 
 type Granularity = "mensal" | "semanal" | "diario";
 
@@ -492,21 +496,47 @@ export default function FaturamentoPage() {
         </ChartCard>
 
         <ChartCard
+          title="Distribuicao por tipo de item"
+          subtitle={`Participacao no faturamento - ${selectedPeriodLabel}`}
+          loading={tipoLoading}
+        >
+          <DistributionPieChart 
+            data={(tipoData as any[]).map(d => ({ name: d.tipo_item, value: d.faturamento_atual }))} 
+            height={300}
+          />
+        </ChartCard>
+      </div>
+
+      <div
+        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginTop: "24px" }}
+      >
+        <ChartCard
           title="Faturamento acumulado"
           subtitle={`${selectedPeriodLabel} vs ${comparisonPeriodLabel}`}
           loading={acumLoading}
         >
           <AcumuladoChart data={acumData as any[]} />
         </ChartCard>
-      </div>
 
-      <div style={{ marginTop: "24px" }}>
         <ChartCard
           title="Faturamento por mecanico"
           subtitle={`Top 15 no comparativo ${selectedPeriodLabel} vs ${comparisonPeriodLabel}`}
           loading={mecanicoLoading}
         >
           <MecanicoChart data={mecanicoData as any[]} />
+        </ChartCard>
+      </div>
+
+      <div style={{ marginTop: "24px" }}>
+        <ChartCard
+          title="Distribuicao por mecanico"
+          subtitle={`Participacao no faturamento - ${selectedPeriodLabel}`}
+          loading={mecanicoLoading}
+        >
+          <DistributionPieChart 
+            data={(mecanicoData as any[]).map(d => ({ name: d.mecanico, value: d.faturamento_atual }))} 
+            height={400}
+          />
         </ChartCard>
       </div>
     </div>
