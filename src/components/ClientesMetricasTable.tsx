@@ -27,12 +27,14 @@ function formatDate(value: string | null) {
     return <span style={{ color: "#94a3b8" }}>—</span>;
   }
 
+  const normalizedDate = value.slice(0, 10);
+
   return new Intl.DateTimeFormat("pt-BR", {
     timeZone: "UTC",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-  }).format(new Date(`${value}T00:00:00Z`));
+  }).format(new Date(`${normalizedDate}T00:00:00Z`));
 }
 
 function formatBRL(value: number | null) {
