@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TonyCar Indicadores
 
-## Getting Started
+Aplicação de indicadores para acompanhamento e gestão da oficina TonyCar, integrada com o banco de dados PostgreSQL (marts do dbt).
 
-First, run the development server:
+## Funcionalidades
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### 📈 Avaliação de Faturamento
+- Faturamento YoY (Mensal, Semanal, Diário)
+- Faturamento por Tipo de Item (Peças, Serviços, etc)
+- Faturamento Mensal Acumulado YoY
+- Faturamento por Mecânico (Top 15)
+
+### 💰 Avaliação de Margem
+- Margem Bruta YoY (Mensal, Semanal) - Custos disponíveis a partir de 2025/05
+- Margem por Tipo de Item
+- Produtividade e Margem por Mecânico
+
+### 📋 Detalhamento
+- Tabela detalhada com Faturamento, Custo, Lucro e Margem por Área, Grupo, Subgrupo e Item.
+- Filtros globais por período, tipo de item, mecânico, área, grupo e subgrupo.
+
+## Tecnologias
+- Next.js 15 (App Router)
+- Recharts (Gráficos)
+- PostgreSQL (Neon Database)
+- Auth: Magic Link (Custom implementation)
+
+## Configuração
+
+### Variáveis de Ambiente (.env)
+```env
+DATABASE_URL=sua_url_do_postgres
+JWT_SECRET=seu_segredo_jwt
+ALLOWED_EMAILS=email1@exemplo.com,email2@exemplo.com
+RESEND_API_KEY=sua_chave_resend (opcional para envio de email)
+BASE_URL=http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Banco de Dados
+Execute o script `setup.sql` no seu banco de dados para criar as tabelas de autenticação.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Desenvolvimento
+```bash
+npm install
+npm run dev
+```
