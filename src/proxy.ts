@@ -1,29 +1,35 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-function getSecret() {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET not set");
-  return new TextEncoder().encode(secret);
-}
+const JWT_SECRET = process.env.JWT_SECRET;
 
-export async function middleware(request: NextRequest) {
-  const token = request.cookies.get("auth_token")?.value;
+// No Next.js 16, a função deve se chamar 'proxy' ou ser o export default
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-  if (!token) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  // Protege apenas as rotas que começam com /dashboard
+  if (pathname.startsWith("/dashboard")) {
+    const token = request.cookies.get("auth_token")?.value;
+
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    try {
+      const secret = new TextEncoder().encode(JWT_SECRET);
+      await jwtVerify(token, secret);
+      return NextResponse.next();
+    } catch (err) {
+      console.error("Proxy auth error:", err);
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
   }
 
-  try {
-    await jwtVerify(token, getSecret());
-    return NextResponse.next();
-  } catch {
-    const response = NextResponse.redirect(new URL("/login", request.url));
-    response.cookies.delete("auth_token");
-    return response;
-  }
+  return NextResponse.next();
 }
 
+// Configuração de compatibilidade para garantir que o Next.js intercepte as rotas corretas
 export const config = {
   matcher: ["/dashboard/:path*"],
 };
