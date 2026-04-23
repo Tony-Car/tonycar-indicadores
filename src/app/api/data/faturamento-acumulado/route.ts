@@ -5,8 +5,12 @@ const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov"
 
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
-  const anoAtual = parseInt(sp.get("anoAtual") || String(new Date().getFullYear()));
-  const anoAnterior = anoAtual - 1;
+  const startDate = sp.get("startDate");
+  const endDate = sp.get("endDate");
+
+  if (!startDate || !endDate) {
+    return NextResponse.json({ error: "startDate e endDate são obrigatórios" }, { status: 400 });
+  }
 
   const filters = {
     tipoItem: parseArrayParam(sp.get("tipoItem")),
@@ -21,49 +25,33 @@ export async function GET(request: NextRequest) {
     const { conditions, params } = buildFilterConditions(filters, 3);
 
     const query = `
-      WITH base AS (
-        SELECT
-          EXTRACT(YEAR FROM io.data_orcamento)::int AS ano,
-          EXTRACT(MONTH FROM io.data_orcamento)::int AS mes,
-          SUM(io.valor_total_item) AS faturamento
-        FROM marts.itens_orcamento io
-        INNER JOIN marts.orcamentos o ON io.nk_orcamento = o.nk_orcamento
-        WHERE ${conditions.join(" AND ")}
-          AND EXTRACT(YEAR FROM io.data_orcamento) IN ($1, $2)
-        GROUP BY 1, 2
-      )
       SELECT
-        mes,
-        COALESCE(SUM(CASE WHEN ano = $1 THEN faturamento END), 0) AS faturamento_atual,
-        COALESCE(SUM(CASE WHEN ano = $2 THEN faturamento END), 0) AS faturamento_anterior
-      FROM base
-      GROUP BY mes
-      ORDER BY mes
+        EXTRACT(YEAR FROM io.data_orcamento)::int AS ano,
+        EXTRACT(MONTH FROM io.data_orcamento)::int AS mes,
+        SUM(io.valor_total_item) AS faturamento
+      FROM marts.itens_orcamento io
+      INNER JOIN marts.orcamentos o ON io.nk_orcamento = o.nk_orcamento
+      WHERE ${conditions.join(" AND ")}
+        AND io.data_orcamento >= $1 AND io.data_orcamento <= $2
+      GROUP BY 1, 2
+      ORDER BY 1, 2
     `;
 
-    const rows = await db.query(query, [anoAtual, anoAnterior, ...params]) as Array<{
-      mes: number; faturamento_atual: string; faturamento_anterior: string;
+    const rows = await db.query(query, [startDate, endDate, ...params]) as Array<{
+      ano: number; mes: number; faturamento: string;
     }>;
 
-    // Build accumulated values (fill missing months)
     let acumulado_atual = 0;
-    let acumulado_anterior = 0;
-    const byMes = new Map(rows.map((r) => [r.mes, r]));
-
-    const result = Array.from({ length: 12 }, (_, i) => {
-      const mes = i + 1;
-      const row = byMes.get(mes);
-      const fat_atual = row ? parseFloat(row.faturamento_atual) : 0;
-      const fat_anterior = row ? parseFloat(row.faturamento_anterior) : 0;
-      acumulado_atual += fat_atual;
-      acumulado_anterior += fat_anterior;
+    const result = rows.map((r) => {
+      const fat = parseFloat(r.faturamento);
+      acumulado_atual += fat;
       return {
-        mes,
-        label: MESES[i],
-        faturamento_atual: fat_atual,
-        faturamento_anterior: fat_anterior,
+        mes: r.mes,
+        label: rows.length > 12 ? `${MESES[r.mes - 1]}/${String(r.ano).slice(2)}` : MESES[r.mes - 1],
+        faturamento_atual: fat,
+        faturamento_anterior: 0,
         acumulado_atual,
-        acumulado_anterior,
+        acumulado_anterior: 0,
       };
     });
 

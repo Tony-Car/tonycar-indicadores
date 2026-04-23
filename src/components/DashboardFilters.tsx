@@ -177,10 +177,16 @@ export default function DashboardFilters() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const currentYear = new Date().getFullYear();
   const [filtros, setFiltros] = useState<FiltrosDisponiveis | null>(null);
 
-  const anoAtual = parseInt(searchParams.get("anoAtual") || String(currentYear));
+  // Default dates: Start of current year to today (better for a global view)
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), 0, 1);
+  const formatDate = (d: Date) => d.toISOString().split("T")[0];
+
+  const startDate = searchParams.get("startDate") || formatDate(firstDay);
+  const endDate = searchParams.get("endDate") || formatDate(today);
+  
   const tipoItem = searchParams.get("tipoItem")?.split(",").filter(Boolean) || [];
   const mecanico = searchParams.get("mecanico")?.split(",").filter(Boolean) || [];
   const area = searchParams.get("area")?.split(",").filter(Boolean) || [];
@@ -216,14 +222,10 @@ export default function DashboardFilters() {
 
   function clearAll() {
     const params = new URLSearchParams();
-    params.set("anoAtual", String(anoAtual));
+    params.set("startDate", formatDate(firstDay));
+    params.set("endDate", formatDate(today));
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
-
-  const years = Array.from(
-    { length: 5 },
-    (_, i) => currentYear - i
-  );
 
   return (
     <div
@@ -243,39 +245,44 @@ export default function DashboardFilters() {
           margin: "0 auto",
         }}
       >
-        {/* Year */}
-        <div>
-          <div
-            style={{
-              fontSize: "11px",
-              fontWeight: "600",
-              color: "#64748b",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              marginBottom: "4px",
-            }}
-          >
-            Ano de referência
+        {/* Período */}
+        <div style={{ display: "flex", gap: "8px" }}>
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: "600", color: "#64748b", textTransform: "uppercase", marginBottom: "4px" }}>
+              Início
+            </div>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => updateParam("startDate", e.target.value)}
+              style={{
+                padding: "7px 10px",
+                border: "1px solid #e2e8f0",
+                borderRadius: "6px",
+                fontSize: "13px",
+                color: "#374151",
+                background: "#fff",
+              }}
+            />
           </div>
-          <select
-            value={anoAtual}
-            onChange={(e) => updateParam("anoAtual", e.target.value)}
-            style={{
-              padding: "7px 10px",
-              border: "1px solid #e2e8f0",
-              borderRadius: "6px",
-              fontSize: "13px",
-              color: "#374151",
-              background: "#fff",
-              cursor: "pointer",
-            }}
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y} vs {y - 1}
-              </option>
-            ))}
-          </select>
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: "600", color: "#64748b", textTransform: "uppercase", marginBottom: "4px" }}>
+              Fim
+            </div>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => updateParam("endDate", e.target.value)}
+              style={{
+                padding: "7px 10px",
+                border: "1px solid #e2e8f0",
+                borderRadius: "6px",
+                fontSize: "13px",
+                color: "#374151",
+                background: "#fff",
+              }}
+            />
+          </div>
         </div>
 
         {/* Tipo Item */}

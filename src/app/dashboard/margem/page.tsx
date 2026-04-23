@@ -131,7 +131,14 @@ function GranularityTabs({
 
 export default function MargemPage() {
   const searchParams = useSearchParams();
-  const anoAtual = parseInt(searchParams.get("anoAtual") || String(new Date().getFullYear()));
+  
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), 0, 1);
+  const formatDate = (d: Date) => d.toISOString().split("T")[0];
+
+  const startDate = searchParams.get("startDate") || formatDate(firstDay);
+  const endDate = searchParams.get("endDate") || formatDate(today);
+  const anoAtual = new Date(startDate).getFullYear();
 
   const [granularity, setGranularity] = useState<Granularity>("mensal");
   const [yoyData, setYoyData] = useState<unknown[]>([]);
@@ -143,14 +150,15 @@ export default function MargemPage() {
 
   const buildParams = useCallback(() => {
     const p = new URLSearchParams();
-    p.set("anoAtual", String(anoAtual));
+    p.set("startDate", startDate);
+    p.set("endDate", endDate);
     if (searchParams.get("tipoItem")) p.set("tipoItem", searchParams.get("tipoItem")!);
     if (searchParams.get("mecanico")) p.set("mecanico", searchParams.get("mecanico")!);
     if (searchParams.get("area")) p.set("area", searchParams.get("area")!);
     if (searchParams.get("grupo")) p.set("grupo", searchParams.get("grupo")!);
     if (searchParams.get("subgrupo")) p.set("subgrupo", searchParams.get("subgrupo")!);
     return p;
-  }, [searchParams, anoAtual]);
+  }, [searchParams, startDate, endDate]);
 
   useEffect(() => {
     setYoyLoading(true);

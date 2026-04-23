@@ -6,8 +6,13 @@ const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov"
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
   const granularity = sp.get("granularity") || "mensal";
-  const anoAtual = parseInt(sp.get("anoAtual") || String(new Date().getFullYear()));
-  const anoAnterior = anoAtual - 1;
+  
+  const startDate = sp.get("startDate");
+  const endDate = sp.get("endDate");
+
+  if (!startDate || !endDate) {
+    return NextResponse.json({ error: "startDate e endDate são obrigatórios" }, { status: 400 });
+  }
 
   const filters = {
     tipoItem: parseArrayParam(sp.get("tipoItem")),
@@ -19,36 +24,54 @@ export async function GET(request: NextRequest) {
 
   try {
     const db = getDb();
-    const { conditions, params } = buildFilterConditions(filters, 3);
-    // Margin only available where flag_custos_atualizados = true
+    const { conditions, params } = buildFilterConditions(filters, 5);
     const allConditions = [...conditions, "io.flag_custos_atualizados = true"];
+    
+    // Período Atual
+    const pAtualStart = startDate;
+    const pAtualEnd = endDate;
+    
+    // Período Anterior
+    const pAnteriorStart = new Date(startDate);
+    pAnteriorStart.setFullYear(pAnteriorStart.getFullYear() - 1);
+    const pAnteriorEnd = new Date(endDate);
+    pAnteriorEnd.setFullYear(pAnteriorEnd.getFullYear() - 1);
+
+    const pAntS = pAnteriorStart.toISOString().split('T')[0];
+    const pAntE = pAnteriorEnd.toISOString().split('T')[0];
 
     if (granularity === "mensal") {
       const query = `
         WITH base AS (
           SELECT
-            EXTRACT(YEAR FROM io.data_orcamento)::int AS ano,
+            CASE 
+              WHEN io.data_orcamento >= $1 AND io.data_orcamento <= $2 THEN 'atual'
+              WHEN io.data_orcamento >= $3 AND io.data_orcamento <= $4 THEN 'anterior'
+            END AS periodo,
             EXTRACT(MONTH FROM io.data_orcamento)::int AS mes,
             SUM(io.valor_total_item) AS faturamento,
             SUM(io.lucro_bruto_total) AS lucro
           FROM marts.itens_orcamento io
           INNER JOIN marts.orcamentos o ON io.nk_orcamento = o.nk_orcamento
           WHERE ${allConditions.join(" AND ")}
-            AND EXTRACT(YEAR FROM io.data_orcamento) IN ($1, $2)
+            AND (
+              (io.data_orcamento >= $1 AND io.data_orcamento <= $2) OR
+              (io.data_orcamento >= $3 AND io.data_orcamento <= $4)
+            )
           GROUP BY 1, 2
         )
         SELECT
           mes,
-          COALESCE(SUM(CASE WHEN ano = $1 THEN faturamento END), 0) AS faturamento_atual,
-          COALESCE(SUM(CASE WHEN ano = $1 THEN lucro END), 0) AS lucro_atual,
-          COALESCE(SUM(CASE WHEN ano = $2 THEN faturamento END), 0) AS faturamento_anterior,
-          COALESCE(SUM(CASE WHEN ano = $2 THEN lucro END), 0) AS lucro_anterior
+          COALESCE(SUM(CASE WHEN periodo = 'atual' THEN faturamento END), 0) AS faturamento_atual,
+          COALESCE(SUM(CASE WHEN periodo = 'atual' THEN lucro END), 0) AS lucro_atual,
+          COALESCE(SUM(CASE WHEN periodo = 'anterior' THEN faturamento END), 0) AS faturamento_anterior,
+          COALESCE(SUM(CASE WHEN periodo = 'anterior' THEN lucro END), 0) AS lucro_anterior
         FROM base
         GROUP BY mes
         ORDER BY mes
       `;
 
-      const rows = await db.query(query, [anoAtual, anoAnterior, ...params]) as Array<{
+      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as Array<{
         mes: number; faturamento_atual: string; lucro_atual: string;
         faturamento_anterior: string; lucro_anterior: string;
       }>;
@@ -76,7 +99,10 @@ export async function GET(request: NextRequest) {
       const query = `
         WITH base AS (
           SELECT
-            EXTRACT(YEAR FROM io.data_orcamento)::int AS ano,
+            CASE 
+              WHEN io.data_orcamento >= $1 AND io.data_orcamento <= $2 THEN 'atual'
+              WHEN io.data_orcamento >= $3 AND io.data_orcamento <= $4 THEN 'anterior'
+            END AS periodo,
             EXTRACT(WEEK FROM io.data_orcamento)::int AS semana_num,
             DATE_TRUNC('week', io.data_orcamento)::date AS semana_inicio,
             SUM(io.valor_total_item) AS faturamento,
@@ -84,22 +110,25 @@ export async function GET(request: NextRequest) {
           FROM marts.itens_orcamento io
           INNER JOIN marts.orcamentos o ON io.nk_orcamento = o.nk_orcamento
           WHERE ${allConditions.join(" AND ")}
-            AND EXTRACT(YEAR FROM io.data_orcamento) IN ($1, $2)
+            AND (
+              (io.data_orcamento >= $1 AND io.data_orcamento <= $2) OR
+              (io.data_orcamento >= $3 AND io.data_orcamento <= $4)
+            )
           GROUP BY 1, 2, 3
         )
         SELECT
           semana_num,
-          MAX(CASE WHEN ano = $1 THEN semana_inicio END) AS semana_inicio_atual,
-          COALESCE(SUM(CASE WHEN ano = $1 THEN faturamento END), 0) AS faturamento_atual,
-          COALESCE(SUM(CASE WHEN ano = $1 THEN lucro END), 0) AS lucro_atual,
-          COALESCE(SUM(CASE WHEN ano = $2 THEN faturamento END), 0) AS faturamento_anterior,
-          COALESCE(SUM(CASE WHEN ano = $2 THEN lucro END), 0) AS lucro_anterior
+          MAX(CASE WHEN periodo = 'atual' THEN semana_inicio END) AS semana_inicio_atual,
+          COALESCE(SUM(CASE WHEN periodo = 'atual' THEN faturamento END), 0) AS faturamento_atual,
+          COALESCE(SUM(CASE WHEN periodo = 'atual' THEN lucro END), 0) AS lucro_atual,
+          COALESCE(SUM(CASE WHEN periodo = 'anterior' THEN faturamento END), 0) AS faturamento_anterior,
+          COALESCE(SUM(CASE WHEN periodo = 'anterior' THEN lucro END), 0) AS lucro_anterior
         FROM base
         GROUP BY semana_num
         ORDER BY semana_num
       `;
 
-      const rows = await db.query(query, [anoAtual, anoAnterior, ...params]) as Array<{
+      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as Array<{
         semana_num: number; semana_inicio_atual: string | null;
         faturamento_atual: string; lucro_atual: string;
         faturamento_anterior: string; lucro_anterior: string;

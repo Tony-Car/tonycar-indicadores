@@ -3,7 +3,12 @@ import { getDb, buildFilterConditions, parseArrayParam } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
-  const anoAtual = parseInt(sp.get("anoAtual") || String(new Date().getFullYear()));
+  const startDate = sp.get("startDate");
+  const endDate = sp.get("endDate");
+
+  if (!startDate || !endDate) {
+    return NextResponse.json({ error: "startDate e endDate são obrigatórios" }, { status: 400 });
+  }
 
   const filters = {
     tipoItem: parseArrayParam(sp.get("tipoItem")),
@@ -15,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const db = getDb();
-    const { conditions, params } = buildFilterConditions(filters, 2);
+    const { conditions, params } = buildFilterConditions(filters, 3);
     const allConditions = [...conditions, "io.flag_custos_atualizados = true"];
 
     const query = `
@@ -26,13 +31,13 @@ export async function GET(request: NextRequest) {
       FROM marts.itens_orcamento io
       INNER JOIN marts.orcamentos o ON io.nk_orcamento = o.nk_orcamento
       WHERE ${allConditions.join(" AND ")}
-        AND EXTRACT(YEAR FROM io.data_orcamento) = $1
+        AND io.data_orcamento >= $1 AND io.data_orcamento <= $2
         AND io.tipo_item IS NOT NULL
       GROUP BY io.tipo_item
       ORDER BY faturamento DESC
     `;
 
-    const rows = await db.query(query, [anoAtual, ...params]) as Array<{
+    const rows = await db.query(query, [startDate, endDate, ...params]) as Array<{
       tipo_item: string; faturamento: string; lucro: string;
     }>;
 

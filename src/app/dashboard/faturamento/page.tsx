@@ -145,7 +145,14 @@ function GranularityTabs({
 
 export default function FaturamentoPage() {
   const searchParams = useSearchParams();
-  const anoAtual = parseInt(searchParams.get("anoAtual") || String(new Date().getFullYear()));
+  
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), 0, 1);
+  const formatDate = (d: Date) => d.toISOString().split("T")[0];
+
+  const startDate = searchParams.get("startDate") || formatDate(firstDay);
+  const endDate = searchParams.get("endDate") || formatDate(today);
+  const anoAtual = new Date(startDate).getFullYear();
 
   const [granularity, setGranularity] = useState<Granularity>("mensal");
   const [mes, setMes] = useState(new Date().getMonth() + 1);
@@ -161,25 +168,26 @@ export default function FaturamentoPage() {
 
   const buildParams = useCallback(() => {
     const p = new URLSearchParams();
-    p.set("anoAtual", String(anoAtual));
+    p.set("startDate", startDate);
+    p.set("endDate", endDate);
     if (searchParams.get("tipoItem")) p.set("tipoItem", searchParams.get("tipoItem")!);
     if (searchParams.get("mecanico")) p.set("mecanico", searchParams.get("mecanico")!);
     if (searchParams.get("area")) p.set("area", searchParams.get("area")!);
     if (searchParams.get("grupo")) p.set("grupo", searchParams.get("grupo")!);
     if (searchParams.get("subgrupo")) p.set("subgrupo", searchParams.get("subgrupo")!);
     return p;
-  }, [searchParams, anoAtual]);
+  }, [searchParams, startDate, endDate]);
 
   // Fetch YoY
   useEffect(() => {
     setYoyLoading(true);
     const p = buildParams();
     p.set("granularity", granularity);
-    if (granularity === "diario") p.set("mes", String(mes));
+    // Note: 'mes' is only used if the API still relies on it, but we should prioritize the range.
     fetch(`/api/data/faturamento-yoy?${p}`)
       .then((r) => r.json())
       .then((d) => { setYoyData(d); setYoyLoading(false); });
-  }, [granularity, mes, buildParams]);
+  }, [granularity, buildParams]);
 
   // Fetch Tipo Item
   useEffect(() => {
