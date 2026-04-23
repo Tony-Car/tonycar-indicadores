@@ -3,6 +3,23 @@ import DashboardNav from "@/components/DashboardNav";
 import DashboardFilters from "@/components/DashboardFilters";
 import { Suspense } from "react";
 
+function DashboardPageFallback() {
+  return (
+    <div
+      style={{
+        background: "#fff",
+        border: "1px solid #e2e8f0",
+        borderRadius: "12px",
+        padding: "24px",
+        color: "#94a3b8",
+        fontSize: "14px",
+      }}
+    >
+      Carregando painel...
+    </div>
+  );
+}
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -23,7 +40,7 @@ export default async function DashboardLayout({
           padding: "24px",
         }}
       >
-        {children}
+        <Suspense fallback={<DashboardPageFallback />}>{children}</Suspense>
       </main>
     </div>
   );

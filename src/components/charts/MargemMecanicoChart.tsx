@@ -97,7 +97,7 @@ export default function MargemMecanicoChart({ data, height = 400 }: Props) {
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
         <XAxis
-          yAxisId="left"
+          xAxisId="left"
           type="number"
           tickFormatter={formatShortBRL}
           tick={{ fontSize: 12, fill: "#64748b" }}
@@ -105,7 +105,7 @@ export default function MargemMecanicoChart({ data, height = 400 }: Props) {
           tickLine={false}
         />
         <XAxis
-          yAxisId="right"
+          xAxisId="right"
           type="number"
           orientation="top"
           tickFormatter={(v) => `${v}%`}
