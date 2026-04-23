@@ -1,17 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, buildFilterConditions, parseArrayParam } from "@/lib/db";
+import { getPreviousYearRange } from "@/lib/period";
 
-const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const MESES = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
 
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
   const granularity = sp.get("granularity") || "mensal";
-  
+
   const startDate = sp.get("startDate");
   const endDate = sp.get("endDate");
 
   if (!startDate || !endDate) {
-    return NextResponse.json({ error: "startDate e endDate são obrigatórios" }, { status: 400 });
+    return NextResponse.json(
+      { error: "startDate e endDate sao obrigatorios" },
+      { status: 400 }
+    );
   }
 
   const filters = {
@@ -25,25 +42,19 @@ export async function GET(request: NextRequest) {
   try {
     const db = getDb();
     const { conditions, params } = buildFilterConditions(filters, 5);
-    
-    // Período Atual
+
     const pAtualStart = startDate;
     const pAtualEnd = endDate;
-    
-    // Período Anterior (Offset -1 ano)
-    const pAnteriorStart = new Date(startDate);
-    pAnteriorStart.setFullYear(pAnteriorStart.getFullYear() - 1);
-    const pAnteriorEnd = new Date(endDate);
-    pAnteriorEnd.setFullYear(pAnteriorEnd.getFullYear() - 1);
-
-    const pAntS = pAnteriorStart.toISOString().split('T')[0];
-    const pAntE = pAnteriorEnd.toISOString().split('T')[0];
+    const { startDate: pAntS, endDate: pAntE } = getPreviousYearRange(
+      startDate,
+      endDate
+    );
 
     if (granularity === "mensal") {
       const query = `
         WITH base AS (
           SELECT
-            CASE 
+            CASE
               WHEN io.data_orcamento >= $1 AND io.data_orcamento <= $2 THEN 'atual'
               WHEN io.data_orcamento >= $3 AND io.data_orcamento <= $4 THEN 'anterior'
             END AS periodo,
@@ -66,8 +77,17 @@ export async function GET(request: NextRequest) {
         GROUP BY mes
         ORDER BY mes
       `;
-      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as unknown as Array<{
-        mes: number; faturamento_atual: string; faturamento_anterior: string;
+
+      const rows = (await db.query(query, [
+        pAtualStart,
+        pAtualEnd,
+        pAntS,
+        pAntE,
+        ...params,
+      ])) as unknown as Array<{
+        mes: number;
+        faturamento_atual: string;
+        faturamento_anterior: string;
       }>;
 
       const result = rows.map((r) => ({
@@ -83,7 +103,7 @@ export async function GET(request: NextRequest) {
       const query = `
         WITH base AS (
           SELECT
-            CASE 
+            CASE
               WHEN io.data_orcamento >= $1 AND io.data_orcamento <= $2 THEN 'atual'
               WHEN io.data_orcamento >= $3 AND io.data_orcamento <= $4 THEN 'anterior'
             END AS periodo,
@@ -108,17 +128,30 @@ export async function GET(request: NextRequest) {
         GROUP BY semana_num
         ORDER BY semana_num
       `;
-      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as unknown as Array<{
-        semana_num: number; semana_inicio_atual: string | null;
-        faturamento_atual: string; faturamento_anterior: string;
+
+      const rows = (await db.query(query, [
+        pAtualStart,
+        pAtualEnd,
+        pAntS,
+        pAntE,
+        ...params,
+      ])) as unknown as Array<{
+        semana_num: number;
+        semana_inicio_atual: string | null;
+        faturamento_atual: string;
+        faturamento_anterior: string;
       }>;
 
       const result = rows.map((r) => {
         let label = `S${r.semana_num}`;
+
         if (r.semana_inicio_atual) {
           const d = new Date(r.semana_inicio_atual);
-          label = `${String(d.getUTCDate()).padStart(2,"0")}/${String(d.getUTCMonth()+1).padStart(2,"0")}`;
+          label = `${String(d.getUTCDate()).padStart(2, "0")}/${String(
+            d.getUTCMonth() + 1
+          ).padStart(2, "0")}`;
         }
+
         return {
           label,
           faturamento_atual: parseFloat(r.faturamento_atual),
@@ -133,7 +166,7 @@ export async function GET(request: NextRequest) {
       const query = `
         WITH base AS (
           SELECT
-            CASE 
+            CASE
               WHEN io.data_orcamento >= $1 AND io.data_orcamento <= $2 THEN 'atual'
               WHEN io.data_orcamento >= $3 AND io.data_orcamento <= $4 THEN 'anterior'
             END AS periodo,
@@ -158,16 +191,30 @@ export async function GET(request: NextRequest) {
         GROUP BY dia
         ORDER BY dia
       `;
-      const rows = await db.query(query, [pAtualStart, pAtualEnd, pAntS, pAntE, ...params]) as unknown as Array<{
-        dia: number; data_atual: string | null; faturamento_atual: string; faturamento_anterior: string;
+
+      const rows = (await db.query(query, [
+        pAtualStart,
+        pAtualEnd,
+        pAntS,
+        pAntE,
+        ...params,
+      ])) as unknown as Array<{
+        dia: number;
+        data_atual: string | null;
+        faturamento_atual: string;
+        faturamento_anterior: string;
       }>;
 
       const result = rows.map((r) => {
         let label = String(r.dia);
+
         if (r.data_atual) {
           const d = new Date(r.data_atual);
-          label = `${String(d.getUTCDate()).padStart(2,"0")}/${String(d.getUTCMonth()+1).padStart(2,"0")}`;
+          label = `${String(d.getUTCDate()).padStart(2, "0")}/${String(
+            d.getUTCMonth() + 1
+          ).padStart(2, "0")}`;
         }
+
         return {
           label,
           faturamento_atual: parseFloat(r.faturamento_atual),
@@ -178,7 +225,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(result);
     }
 
-    return NextResponse.json({ error: "granularity inválido" }, { status: 400 });
+    return NextResponse.json({ error: "granularity invalido" }, { status: 400 });
   } catch (err) {
     console.error("faturamento-yoy error:", err);
     return NextResponse.json({ error: "Erro interno." }, { status: 500 });

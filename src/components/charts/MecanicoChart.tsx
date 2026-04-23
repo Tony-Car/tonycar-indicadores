@@ -19,7 +19,6 @@ interface DataPoint {
 
 interface Props {
   data: DataPoint[];
-  anoAtual: number;
   height?: number;
 }
 
@@ -47,8 +46,10 @@ const CustomTooltip = ({
   label?: string;
 }) => {
   if (!active || !payload?.length) return null;
-  const atual = payload.find((p) => p.name === "Ano Atual")?.value ?? 0;
-  const anterior = payload.find((p) => p.name === "Ano Anterior")?.value ?? 0;
+  const atual =
+    payload.find((p) => p.name === "Periodo selecionado")?.value ?? 0;
+  const anterior =
+    payload.find((p) => p.name === "Periodo comparativo")?.value ?? 0;
   const crescimento = anterior > 0 ? ((atual - anterior) / anterior) * 100 : null;
 
   return (
@@ -106,7 +107,7 @@ const CustomTooltip = ({
   );
 };
 
-export default function MecanicoChart({ data, anoAtual, height = 400 }: Props) {
+export default function MecanicoChart({ data, height = 400 }: Props) {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart
@@ -139,14 +140,14 @@ export default function MecanicoChart({ data, anoAtual, height = 400 }: Props) {
         />
         <Bar
           dataKey="faturamento_atual"
-          name="Ano Atual"
+          name="Periodo selecionado"
           fill="#2563eb"
           radius={[0, 4, 4, 0]}
           maxBarSize={28}
         />
         <Bar
           dataKey="faturamento_anterior"
-          name="Ano Anterior"
+          name="Periodo comparativo"
           fill="#cbd5e1"
           radius={[0, 4, 4, 0]}
           maxBarSize={28}

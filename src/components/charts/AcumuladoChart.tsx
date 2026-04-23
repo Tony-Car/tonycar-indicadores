@@ -20,7 +20,6 @@ interface DataPoint {
 
 interface Props {
   data: DataPoint[];
-  anoAtual: number;
   height?: number;
 }
 
@@ -48,8 +47,10 @@ const CustomTooltip = ({
   label?: string;
 }) => {
   if (!active || !payload?.length) return null;
-  const atual = payload.find((p) => p.name === "Acumulado Atual")?.value ?? 0;
-  const anterior = payload.find((p) => p.name === "Acumulado Anterior")?.value ?? 0;
+  const atual =
+    payload.find((p) => p.name === "Acumulado selecionado")?.value ?? 0;
+  const anterior =
+    payload.find((p) => p.name === "Acumulado comparativo")?.value ?? 0;
   const delta = atual - anterior;
 
   return (
@@ -102,9 +103,7 @@ const CustomTooltip = ({
   );
 };
 
-export default function AcumuladoChart({ data, anoAtual, height = 340 }: Props) {
-  const anoAnterior = anoAtual - 1;
-
+export default function AcumuladoChart({ data, height = 340 }: Props) {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart
@@ -135,7 +134,7 @@ export default function AcumuladoChart({ data, anoAtual, height = 340 }: Props) 
         <Line
           type="monotone"
           dataKey="acumulado_atual"
-          name="Acumulado Atual"
+          name="Acumulado selecionado"
           stroke="#2563eb"
           strokeWidth={2.5}
           dot={{ fill: "#2563eb", r: 4, strokeWidth: 0 }}
@@ -144,7 +143,7 @@ export default function AcumuladoChart({ data, anoAtual, height = 340 }: Props) 
         <Line
           type="monotone"
           dataKey="acumulado_anterior"
-          name="Acumulado Anterior"
+          name="Acumulado comparativo"
           stroke="#94a3b8"
           strokeWidth={2.5}
           strokeDasharray="5 4"

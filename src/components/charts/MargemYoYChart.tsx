@@ -25,7 +25,6 @@ interface DataPoint {
 
 interface Props {
   data: DataPoint[];
-  anoAtual: number;
   height?: number;
 }
 
@@ -54,8 +53,8 @@ const CustomTooltip = ({
 }) => {
   if (!active || !payload?.length) return null;
 
-  const luc_atual = payload.find(p => p.name.includes("Lucro") && !p.name.includes("Anterior"))?.value ?? 0;
-  const luc_anterior = payload.find(p => p.name.includes("Lucro") && p.name.includes("Anterior"))?.value ?? 0;
+  const luc_atual = payload.find((p) => p.name === "Lucro selecionado")?.value ?? 0;
+  const luc_anterior = payload.find((p) => p.name === "Lucro comparativo")?.value ?? 0;
   const crescimento = luc_anterior > 0 ? ((luc_atual - luc_anterior) / luc_anterior) * 100 : null;
 
   return (
@@ -120,9 +119,7 @@ const CustomTooltip = ({
   );
 };
 
-export default function MargemYoYChart({ data, anoAtual, height = 340 }: Props) {
-  const anoAnterior = anoAtual - 1;
-
+export default function MargemYoYChart({ data, height = 340 }: Props) {
   const enriched = data.map(d => ({
     ...d,
     crescimento_lucro: d.lucro_anterior > 0 ? ((d.lucro_atual - d.lucro_anterior) / d.lucro_anterior) * 100 : null
@@ -169,7 +166,7 @@ export default function MargemYoYChart({ data, anoAtual, height = 340 }: Props) 
         <Bar
           yAxisId="left"
           dataKey="lucro_atual"
-          name={`Lucro ${anoAtual}`}
+          name="Lucro selecionado"
           fill="#22c55e"
           radius={[4, 4, 0, 0]}
           maxBarSize={48}
@@ -177,7 +174,7 @@ export default function MargemYoYChart({ data, anoAtual, height = 340 }: Props) 
         <Bar
           yAxisId="left"
           dataKey="lucro_anterior"
-          name={`Lucro ${anoAnterior}`}
+          name="Lucro comparativo"
           fill="#cbd5e1"
           radius={[4, 4, 0, 0]}
           maxBarSize={48}
@@ -186,7 +183,7 @@ export default function MargemYoYChart({ data, anoAtual, height = 340 }: Props) 
           yAxisId="right"
           type="monotone"
           dataKey="margem_pct_atual"
-          name={`Margem % ${anoAtual}`}
+          name="Margem % selecionada"
           stroke="#2563eb"
           strokeWidth={2.5}
           dot={{ fill: "#2563eb", r: 4, strokeWidth: 0 }}
@@ -196,7 +193,7 @@ export default function MargemYoYChart({ data, anoAtual, height = 340 }: Props) 
           yAxisId="right"
           type="monotone"
           dataKey="margem_pct_anterior"
-          name={`Margem % ${anoAnterior}`}
+          name="Margem % comparativa"
           stroke="#94a3b8"
           strokeWidth={2}
           strokeDasharray="5 4"

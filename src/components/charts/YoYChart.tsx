@@ -21,7 +21,6 @@ interface DataPoint {
 
 interface Props {
   data: DataPoint[];
-  anoAtual: number;
   height?: number;
 }
 
@@ -51,8 +50,10 @@ const CustomTooltip = ({
 }) => {
   if (!active || !payload?.length) return null;
 
-  const atual = payload.find((p) => p.name === "Ano Atual")?.value ?? 0;
-  const anterior = payload.find((p) => p.name === "Ano Anterior")?.value ?? 0;
+  const atual =
+    payload.find((p) => p.name === "Periodo selecionado")?.value ?? 0;
+  const anterior =
+    payload.find((p) => p.name === "Periodo comparativo")?.value ?? 0;
   const crescimento = anterior > 0 ? ((atual - anterior) / anterior) * 100 : null;
 
   return (
@@ -114,9 +115,7 @@ const CustomTooltip = ({
   );
 };
 
-export default function YoYChart({ data, anoAtual, height = 340 }: Props) {
-  const anoAnterior = anoAtual - 1;
-
+export default function YoYChart({ data, height = 340 }: Props) {
   const enriched = data.map((d) => ({
     ...d,
     crescimento:
@@ -168,7 +167,7 @@ export default function YoYChart({ data, anoAtual, height = 340 }: Props) {
         <Bar
           yAxisId="left"
           dataKey="faturamento_atual"
-          name="Ano Atual"
+          name="Periodo selecionado"
           fill="#2563eb"
           radius={[4, 4, 0, 0]}
           maxBarSize={48}
@@ -176,7 +175,7 @@ export default function YoYChart({ data, anoAtual, height = 340 }: Props) {
         <Bar
           yAxisId="left"
           dataKey="faturamento_anterior"
-          name="Ano Anterior"
+          name="Periodo comparativo"
           fill="#cbd5e1"
           radius={[4, 4, 0, 0]}
           maxBarSize={48}

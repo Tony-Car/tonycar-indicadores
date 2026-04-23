@@ -1,0 +1,55 @@
+function parseIsoDateParts(isoDate: string) {
+  const [year, month, day] = isoDate.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    throw new Error(`Invalid ISO date: ${isoDate}`);
+  }
+
+  return { year, month, day };
+}
+
+function toIsoDate(year: number, month: number, day: number) {
+  return [
+    String(year).padStart(4, "0"),
+    String(month).padStart(2, "0"),
+    String(day).padStart(2, "0"),
+  ].join("-");
+}
+
+function getDaysInMonth(year: number, month: number) {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+export function shiftIsoDateByYears(isoDate: string, yearOffset: number) {
+  const { year, month, day } = parseIsoDateParts(isoDate);
+  const targetYear = year + yearOffset;
+  const safeDay = Math.min(day, getDaysInMonth(targetYear, month));
+
+  return toIsoDate(targetYear, month, safeDay);
+}
+
+export function getPreviousYearRange(startDate: string, endDate: string) {
+  return {
+    startDate: shiftIsoDateByYears(startDate, -1),
+    endDate: shiftIsoDateByYears(endDate, -1),
+  };
+}
+
+export function formatDateLabel(isoDate: string) {
+  const { year, month, day } = parseIsoDateParts(isoDate);
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "UTC",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+}
+
+export function formatDateRangeLabel(startDate: string, endDate: string) {
+  if (startDate === endDate) {
+    return formatDateLabel(startDate);
+  }
+
+  return `${formatDateLabel(startDate)} a ${formatDateLabel(endDate)}`;
+}

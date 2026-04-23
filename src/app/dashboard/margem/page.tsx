@@ -3,10 +3,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
+import { formatDateRangeLabel, getPreviousYearRange } from "@/lib/period";
 
-const MargemYoYChart = dynamic(() => import("@/components/charts/MargemYoYChart"), { ssr: false });
-const MargemTipoItemChart = dynamic(() => import("@/components/charts/MargemTipoItemChart"), { ssr: false });
-const MargemMecanicoChart = dynamic(() => import("@/components/charts/MargemMecanicoChart"), { ssr: false });
+const MargemYoYChart = dynamic(
+  () => import("@/components/charts/MargemYoYChart"),
+  { ssr: false }
+);
+const MargemTipoItemChart = dynamic(
+  () => import("@/components/charts/MargemTipoItemChart"),
+  { ssr: false }
+);
+const MargemMecanicoChart = dynamic(
+  () => import("@/components/charts/MargemMecanicoChart"),
+  { ssr: false }
+);
 
 type Granularity = "mensal" | "semanal";
 
@@ -46,11 +56,24 @@ function ChartCard({
         }}
       >
         <div>
-          <h2 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#1e293b" }}>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: "16px",
+              fontWeight: "700",
+              color: "#1e293b",
+            }}
+          >
             {title}
           </h2>
           {subtitle && (
-            <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#64748b" }}>
+            <p
+              style={{
+                margin: "4px 0 0",
+                fontSize: "13px",
+                color: "#64748b",
+              }}
+            >
               {subtitle}
             </p>
           )}
@@ -69,7 +92,7 @@ function ChartCard({
             marginBottom: "16px",
           }}
         >
-          ⚠️ {notice}
+          {notice}
         </div>
       )}
       {loading ? (
@@ -103,8 +126,16 @@ function GranularityTabs({
     { value: "mensal", label: "Mensal" },
     { value: "semanal", label: "Semanal" },
   ];
+
   return (
-    <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "8px", padding: "3px" }}>
+    <div
+      style={{
+        display: "flex",
+        background: "#f1f5f9",
+        borderRadius: "8px",
+        padding: "3px",
+      }}
+    >
       {tabs.map((t) => (
         <button
           key={t.value}
@@ -131,14 +162,19 @@ function GranularityTabs({
 
 export default function MargemPage() {
   const searchParams = useSearchParams();
-  
+
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), 0, 1);
   const formatDate = (d: Date) => d.toISOString().split("T")[0];
 
   const startDate = searchParams.get("startDate") || formatDate(firstDay);
   const endDate = searchParams.get("endDate") || formatDate(today);
-  const anoAtual = new Date(startDate).getFullYear();
+  const comparisonRange = getPreviousYearRange(startDate, endDate);
+  const selectedPeriodLabel = formatDateRangeLabel(startDate, endDate);
+  const comparisonPeriodLabel = formatDateRangeLabel(
+    comparisonRange.startDate,
+    comparisonRange.endDate
+  );
 
   const [granularity, setGranularity] = useState<Granularity>("mensal");
   const [yoyData, setYoyData] = useState<unknown[]>([]);
@@ -152,11 +188,21 @@ export default function MargemPage() {
     const p = new URLSearchParams();
     p.set("startDate", startDate);
     p.set("endDate", endDate);
-    if (searchParams.get("tipoItem")) p.set("tipoItem", searchParams.get("tipoItem")!);
-    if (searchParams.get("mecanico")) p.set("mecanico", searchParams.get("mecanico")!);
-    if (searchParams.get("area")) p.set("area", searchParams.get("area")!);
-    if (searchParams.get("grupo")) p.set("grupo", searchParams.get("grupo")!);
-    if (searchParams.get("subgrupo")) p.set("subgrupo", searchParams.get("subgrupo")!);
+    if (searchParams.get("tipoItem")) {
+      p.set("tipoItem", searchParams.get("tipoItem")!);
+    }
+    if (searchParams.get("mecanico")) {
+      p.set("mecanico", searchParams.get("mecanico")!);
+    }
+    if (searchParams.get("area")) {
+      p.set("area", searchParams.get("area")!);
+    }
+    if (searchParams.get("grupo")) {
+      p.set("grupo", searchParams.get("grupo")!);
+    }
+    if (searchParams.get("subgrupo")) {
+      p.set("subgrupo", searchParams.get("subgrupo")!);
+    }
     return p;
   }, [searchParams, startDate, endDate]);
 
@@ -166,107 +212,146 @@ export default function MargemPage() {
     p.set("granularity", granularity);
     fetch(`/api/data/margem-yoy?${p}`)
       .then((r) => r.json())
-      .then((d) => { setYoyData(d); setYoyLoading(false); });
+      .then((d) => {
+        setYoyData(d);
+        setYoyLoading(false);
+      });
   }, [granularity, buildParams]);
 
   useEffect(() => {
     setTipoLoading(true);
     fetch(`/api/data/margem-tipo-item?${buildParams()}`)
       .then((r) => r.json())
-      .then((d) => { setTipoData(d); setTipoLoading(false); });
+      .then((d) => {
+        setTipoData(d);
+        setTipoLoading(false);
+      });
   }, [buildParams]);
 
   useEffect(() => {
     setMecanicoLoading(true);
     fetch(`/api/data/margem-mecanico?${buildParams()}`)
       .then((r) => r.json())
-      .then((d) => { setMecanicoData(d); setMecanicoLoading(false); });
+      .then((d) => {
+        setMecanicoData(d);
+        setMecanicoLoading(false);
+      });
   }, [buildParams]);
 
-  // KPIs
   type MargemRow = { faturamento_atual: number; lucro_atual: number };
-  const totalFat = (yoyData as MargemRow[]).reduce((s, r) => s + r.faturamento_atual, 0);
-  const totalLucro = (yoyData as MargemRow[]).reduce((s, r) => s + r.lucro_atual, 0);
+
+  const totalFat = (yoyData as MargemRow[]).reduce(
+    (sum, row) => sum + row.faturamento_atual,
+    0
+  );
+  const totalLucro = (yoyData as MargemRow[]).reduce(
+    (sum, row) => sum + row.lucro_atual,
+    0
+  );
   const margemMedia = totalFat > 0 ? (totalLucro / totalFat) * 100 : 0;
 
-  const fmt = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
+  const fmt = (value: number) =>
+    new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 0,
+    }).format(value);
 
   return (
     <div>
-      {/* KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: "16px",
+          marginBottom: "24px",
+        }}
+      >
         {[
           { label: "Faturamento", value: fmt(totalFat), color: "#1e293b", bg: "#fff" },
-          { label: "Lucro Bruto", value: fmt(totalLucro), color: "#16a34a", bg: "#f0fdf4" },
           {
-            label: "Margem Bruta",
+            label: "Lucro bruto",
+            value: fmt(totalLucro),
+            color: "#16a34a",
+            bg: "#f0fdf4",
+          },
+          {
+            label: "Margem bruta",
             value: `${margemMedia.toFixed(1)}%`,
             color: margemMedia >= 0 ? "#16a34a" : "#dc2626",
             bg: margemMedia >= 0 ? "#f0fdf4" : "#fef2f2",
           },
-        ].map((k) => (
+        ].map((kpi) => (
           <div
-            key={k.label}
+            key={kpi.label}
             style={{
-              background: k.bg,
+              background: kpi.bg,
               border: "1px solid #e2e8f0",
               borderRadius: "12px",
               padding: "20px 24px",
             }}
           >
-            <div style={{ fontSize: "12px", fontWeight: "600", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              {k.label} ({anoAtual})
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: "600",
+                color: "#64748b",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              {kpi.label}
             </div>
-            <div style={{ fontSize: "26px", fontWeight: "700", color: k.color, marginTop: "6px" }}>
-              {yoyLoading ? "..." : k.value}
+            <div
+              style={{
+                fontSize: "12px",
+                color: "#94a3b8",
+                marginTop: "4px",
+              }}
+            >
+              {selectedPeriodLabel}
+            </div>
+            <div
+              style={{
+                fontSize: "26px",
+                fontWeight: "700",
+                color: kpi.color,
+                marginTop: "8px",
+              }}
+            >
+              {yoyLoading ? "..." : kpi.value}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Margem YoY */}
       <ChartCard
-        title="Margem Bruta Ano a Ano"
-        subtitle={`Comparativo ${anoAtual} vs ${anoAtual - 1}`}
+        title="Margem bruta por periodo"
+        subtitle={`Comparativo ${selectedPeriodLabel} vs ${comparisonPeriodLabel}`}
         loading={yoyLoading}
-        notice="Dados de custo disponíveis apenas a partir de junho/2025 (flag_custos_atualizados)"
-        action={
-          <GranularityTabs value={granularity} onChange={setGranularity} />
-        }
+        notice="Dados de custo disponiveis apenas a partir de junho/2025 (flag_custos_atualizados)"
+        action={<GranularityTabs value={granularity} onChange={setGranularity} />}
       >
-        <MargemYoYChart
-          data={yoyData as any[]}
-          anoAtual={anoAtual}
-        />
+        <MargemYoYChart data={yoyData as any[]} />
       </ChartCard>
 
-      {/* Margem por Tipo */}
       <ChartCard
-        title="Margem Bruta por Tipo de Item"
-        subtitle={`Ano ${anoAtual} — apenas dados com custos atualizados`}
+        title="Margem bruta por tipo de item"
+        subtitle={`Periodo selecionado: ${selectedPeriodLabel}`}
         loading={tipoLoading}
-        notice="Dados de custo disponíveis apenas a partir de junho/2025 (flag_custos_atualizados)"
+        notice="Dados de custo disponiveis apenas a partir de junho/2025 (flag_custos_atualizados)"
       >
-        <MargemTipoItemChart
-          data={tipoData as any[]}
-          height={320}
-        />
+        <MargemTipoItemChart data={tipoData as any[]} height={320} />
       </ChartCard>
 
-      {/* Margem por Mecanico */}
       <ChartCard
-        title="Produtividade e Margem por Mecânico"
-        subtitle={`Ano ${anoAtual} — ranking por lucro bruto`}
+        title="Produtividade e margem por mecanico"
+        subtitle={`Periodo selecionado: ${selectedPeriodLabel}`}
         loading={mecanicoLoading}
-        notice="Dados de custo disponíveis apenas a partir de junho/2025 (flag_custos_atualizados)"
+        notice="Dados de custo disponiveis apenas a partir de junho/2025 (flag_custos_atualizados)"
       >
-        <MargemMecanicoChart
-          data={mecanicoData as any[]}
-          height={400}
-        />
+        <MargemMecanicoChart data={mecanicoData as any[]} height={400} />
       </ChartCard>
     </div>
   );
 }
-
