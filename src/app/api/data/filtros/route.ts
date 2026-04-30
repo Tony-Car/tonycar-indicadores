@@ -43,6 +43,7 @@ export async function GET() {
       grupos: grupos.map((r) => r.value),
       subgrupos: subgrupos.map((r) => r.value),
       tipo_item: ["Peças", "Serviços", "Terceiros", "Peças Fornecidas"],
+      status: ["Aberto", "Autorizado", "Fechado", "Cancelado"],
     });
   } catch (err) {
     console.error("filtros error:", err);

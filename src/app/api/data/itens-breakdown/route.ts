@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
 
   const filters = {
     tipoItem: parseArrayParam(sp.get("tipoItem")),
+    status: parseArrayParam(sp.get("status")),
     mecanico: parseArrayParam(sp.get("mecanico")),
     area: parseArrayParam(sp.get("area")),
     grupo: parseArrayParam(sp.get("grupo")),

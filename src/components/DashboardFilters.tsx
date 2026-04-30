@@ -9,6 +9,7 @@ interface FiltrosDisponiveis {
   grupos: string[];
   subgrupos: string[];
   tipo_item: string[];
+  status: string[];
 }
 
 function MultiSelect({
@@ -188,6 +189,7 @@ export default function DashboardFilters() {
   const endDate = searchParams.get("endDate") || formatDate(today);
   
   const tipoItem = searchParams.get("tipoItem")?.split(",").filter(Boolean) || [];
+  const status = searchParams.get("status")?.split(",").filter(Boolean) || [];
   const mecanico = searchParams.get("mecanico")?.split(",").filter(Boolean) || [];
   const area = searchParams.get("area")?.split(",").filter(Boolean) || [];
   const grupo = searchParams.get("grupo")?.split(",").filter(Boolean) || [];
@@ -215,6 +217,7 @@ export default function DashboardFilters() {
 
   const hasFilters =
     tipoItem.length > 0 ||
+    status.length > 0 ||
     mecanico.length > 0 ||
     area.length > 0 ||
     grupo.length > 0 ||
@@ -291,6 +294,14 @@ export default function DashboardFilters() {
           options={filtros?.tipo_item || []}
           selected={tipoItem}
           onChange={(v) => updateParam("tipoItem", v)}
+        />
+
+        {/* Status */}
+        <MultiSelect
+          label="Status"
+          options={filtros?.status || []}
+          selected={status}
+          onChange={(v) => updateParam("status", v)}
         />
 
         {/* Mecânico */}

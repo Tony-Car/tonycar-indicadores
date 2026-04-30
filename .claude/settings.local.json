@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:\\\\Users\\\\olvle\\\\projetos\\\\tonycar-indicadores\" status)",
+      "Bash(git -C \"C:\\\\Users\\\\olvle\\\\projetos\\\\tonycar-indicadores\" diff)",
+      "Bash(git -C \"C:\\\\Users\\\\olvle\\\\projetos\\\\tonycar-indicadores\" add src/app/api/data/clientes-analytics/route.ts src/app/dashboard/clientes/page.tsx)",
+      "Bash(git -C 'C:\\\\Users\\\\olvle\\\\projetos\\\\tonycar-indicadores' commit -m ' *)",
+      "Bash(git *)",
+      "Bash(xargs grep *)",
+      "Bash(grep -E \"^\\\\s+[a-zA-Z_]+\\\\s*\\(as|,|$\\)\" /c/Users/olvle/projetos/tonycar-dw/dags/dbt/tonycar/models/marts/clientes_metricas.sql)"
+    ]
+  }
+}

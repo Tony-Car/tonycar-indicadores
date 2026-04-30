@@ -7,11 +7,20 @@ function buildClienteAnalyticsFilters(filters: {
   area: string[];
   grupo: string[];
   subgrupo: string[];
+  status: string[];
 }) {
   const budgetConditions: string[] = [];
   const itemConditions: string[] = [];
   const params: unknown[] = [];
   let index = 3;
+
+  if (filters.status.length > 0) {
+    budgetConditions.push(`o.status = ANY($${index})`);
+    params.push(filters.status);
+    index += 1;
+  } else {
+    budgetConditions.push("o.flag_cancelado = false");
+  }
 
   if (filters.mecanico.length > 0) {
     budgetConditions.push(`o.mecanico_responsavel = ANY($${index})`);
@@ -106,6 +115,7 @@ export async function GET(request: NextRequest) {
 
   const filters = {
     tipoItem: parseArrayParam(searchParams.get("tipoItem")),
+    status: parseArrayParam(searchParams.get("status")),
     mecanico: parseArrayParam(searchParams.get("mecanico")),
     area: parseArrayParam(searchParams.get("area")),
     grupo: parseArrayParam(searchParams.get("grupo")),

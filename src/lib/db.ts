@@ -13,15 +13,24 @@ export interface QueryFilters {
   area?: string[]
   grupo?: string[]
   subgrupo?: string[]
+  status?: string[]
 }
 
 export function buildFilterConditions(
   filters: QueryFilters,
   startIdx = 1
 ): { conditions: string[]; params: unknown[]; nextIdx: number } {
-  const conditions: string[] = ["o.flag_cancelado = false"];
+  const conditions: string[] = [];
   const params: unknown[] = [];
   let idx = startIdx;
+
+  if (filters.status && filters.status.length > 0) {
+    conditions.push(`o.status = ANY($${idx++})`);
+    params.push(filters.status);
+  } else {
+    // Por padrão, não mostramos cancelados a menos que explicitamente filtrado
+    conditions.push("o.flag_cancelado = false");
+  }
 
   if (filters.tipoItem && filters.tipoItem.length > 0) {
     conditions.push(`io.tipo_item = ANY($${idx++})`);
